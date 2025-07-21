@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display Name",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "signupSuccess": "Account created successfully! Please check your email to verify your account.",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?"
+  },
+  "events": {
+    "title": "Motorsport Events",
+    "subtitle": "Discover and join drift and motorsport events across Poland",
+    "register": "Register",
+    "listView": "List View",
+    "mapView": "Map View",
+    "loadError": "Failed to load events. Please try again.",
+    "noEvents": "No events found matching your criteria.",
+    "levels": {
+      "beginner": "Beginner",
+      "street": "Street",
+      "pro": "Professional"
+    },
+    "filters": {
+      "level": "Level",
+      "allLevels": "All Levels",
+      "priceMin": "Min Price",
+      "priceMax": "Max Price",
+      "dateFrom": "From Date",
+      "dateTo": "To Date"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "events": "Events",
+    "profile": "Profile",
+    "admin": "Admin",
+    "createEvent": "Create Event"
+  }
+}

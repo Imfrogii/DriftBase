@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "signIn": "Zaloguj się",
+    "signUp": "Zarejestruj się",
+    "signOut": "Wyloguj się",
+    "email": "Email",
+    "password": "Hasło",
+    "displayName": "Nazwa wyświetlana",
+    "emailRequired": "Email jest wymagany",
+    "emailInvalid": "Nieprawidłowy format email",
+    "passwordRequired": "Hasło jest wymagane",
+    "passwordMinLength": "Hasło musi mieć co najmniej 6 znaków",
+    "signupSuccess": "Konto zostało utworzone! Sprawdź email aby zweryfikować konto.",
+    "noAccount": "Nie masz konta?",
+    "haveAccount": "Masz już konto?"
+  },
+  "events": {
+    "title": "Eventi Motorsportowe",
+    "subtitle": "Odkryj i dołącz do wydarzeń drift i motorsport w całej Polsce",
+    "register": "Zarejestruj się",
+    "listView": "Widok listy",
+    "mapView": "Widok mapy",
+    "loadError": "Nie udało się załadować wydarzeń. Spróbuj ponownie.",
+    "noEvents": "Nie znaleziono wydarzeń spełniających kryteria.",
+    "levels": {
+      "beginner": "Początkujący",
+      "street": "Uliczny",
+      "pro": "Profesjonalny"
+    },
+    "filters": {
+      "level": "Poziom",
+      "allLevels": "Wszystkie poziomy",
+      "priceMin": "Cena min",
+      "priceMax": "Cena max",
+      "dateFrom": "Od daty",
+      "dateTo": "Do daty"
+    }
+  },
+  "navigation": {
+    "home": "Strona główna",
+    "events": "Wydarzenia",
+    "profile": "Profil",
+    "admin": "Admin",
+    "createEvent": "Utwórz wydarzenie"
+  }
+}

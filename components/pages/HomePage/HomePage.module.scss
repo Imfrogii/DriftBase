@@ -1,0 +1,78 @@
+.container {
+  padding: 40px 16px;
+  min-height: 100vh;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+  background: linear-gradient(45deg, #1976d2, #dc004e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin-bottom: 32px !important;
+}
+
+.viewToggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+  
+  .MuiToggleButton-root {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    text-transform: none;
+    font-weight: 600;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.mapPlaceholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 500px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.noEvents {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 8px;
+  }
+  
+  .title {
+    font-size: 2rem !important;
+  }
+  
+  .viewToggle {
+    .MuiToggleButton-root {
+      padding: 8px 16px;
+      font-size: 0.875rem;
+    }
+  }
+}

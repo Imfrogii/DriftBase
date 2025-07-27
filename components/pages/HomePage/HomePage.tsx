@@ -1,142 +1,93 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  ToggleButton,
-  ToggleButtonGroup,
-  CircularProgress,
-  Alert,
-} from "@mui/material"
-import { ViewList, Map as MapIcon } from "@mui/icons-material"
-import { EventCard } from "@/components/common/EventCard/EventCard"
-import { EventFilters } from "@/components/common/EventFilters/EventFilters"
-import { useEvents } from "@/lib/queries/events"
-import { useAuth } from "@/lib/hooks/useAuth"
-import { useTranslations } from "next-intl"
-import dynamic from "next/dynamic"
-import styles from "./HomePage.module.scss"
+import type React from "react";
 
-// Dynamically import map to avoid SSR issues
-const DynamicEventMap = dynamic(
-  () => import("@/components/common/EventMap/EventMap").then((mod) => ({ default: mod.EventMap })),
-  {
-    ssr: false,
-    loading: () => (
-      <Box className={styles.mapPlaceholder}>
-        <CircularProgress />
-      </Box>
-    ),
-  },
-)
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { Container, Typography, Tabs, Tab, Box } from "@mui/material";
+import { EventFilters } from "@/components/common/EventFilters/EventFilters";
+import { EventCard } from "@/components/common/EventCard/EventCard";
+import { EventMap } from "@/components/common/EventMap/EventMap";
+import styles from "./HomePage.module.scss";
+import { useEvents } from "@/lib/queries/events";
 
-export function HomePage() {
-  const t = useTranslations("events")
-  const { user } = useAuth()
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
 
-  const [view, setView] = useState<"list" | "map">("list")
-  const [filters, setFilters] = useState({
-    level: "",
-    priceMin: "",
-    priceMax: "",
-    dateFrom: "",
-    dateTo: "",
-  })
-
-  const queryFilters = useMemo(() => {
-    const result: any = {}
-
-    if (filters.level) result.level = filters.level
-    if (filters.priceMin) result.priceMin = Number.parseFloat(filters.priceMin)
-    if (filters.priceMax) result.priceMax = Number.parseFloat(filters.priceMax)
-    if (filters.dateFrom) result.dateFrom = filters.dateFrom
-    if (filters.dateTo) result.dateTo = filters.dateTo
-
-    return result
-  }, [filters])
-
-  const { data: events, isLoading, error } = useEvents(queryFilters)
-
-  const handleRegister = (eventId: string) => {
-    if (!user) {
-      // Redirect to login
-      window.location.href = "/auth/signin"
-      return
-    }
-
-    // Redirect to event details page
-    window.location.href = `/events/${eventId}`
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg" className={styles.container}>
-        <Alert severity="error">{t("loadError")}</Alert>
-      </Container>
-    )
-  }
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
 
   return (
-    <Container maxWidth="lg" className={styles.container}>
-      <Box className={styles.header}>
-        <Typography variant="h2" component="h1" className={styles.title}>
-          {t("title")}
-        </Typography>
-        <Typography variant="h6" color="text.secondary" className={styles.subtitle}>
-          {t("subtitle")}
-        </Typography>
-      </Box>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
-      <EventFilters filters={filters} onFiltersChange={setFilters} />
+export function HomePage() {
+  const t = useTranslations();
+  const [tabValue, setTabValue] = useState(0);
+  const [filters, setFilters] = useState({
+    level: "",
+    priceRange: [0, 1000],
+    dateRange: { start: null, end: null },
+  });
 
-      <Box className={styles.viewToggle}>
-        <ToggleButtonGroup
-          value={view}
-          exclusive
-          onChange={(_, newView) => newView && setView(newView)}
-          aria-label="view mode"
-        >
-          <ToggleButton value="list" aria-label="list view">
-            <ViewList />
-            {t("listView")}
-          </ToggleButton>
-          <ToggleButton value="map" aria-label="map view">
-            <MapIcon />
-            {t("mapView")}
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
-      {isLoading ? (
-        <Box className={styles.loading}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          {view === "list" ? (
-            <Grid container spacing={3}>
-              {events?.map((event) => (
-                <Grid item xs={12} sm={6} md={4} key={event.id}>
-                  <EventCard event={event} onRegister={handleRegister} showRegisterButton={!!user} />
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <DynamicEventMap events={events || []} onEventClick={(event) => handleRegister(event.id)} />
-          )}
+  const { data, isLoading } = useEvents(filters);
 
-          {events?.length === 0 && (
-            <Box className={styles.noEvents}>
-              <Typography variant="h6" color="text.secondary">
-                {t("noEvents")}
-              </Typography>
-            </Box>
-          )}
-        </>
-      )}
-    </Container>
-  )
+  return (
+    <div className={styles.homePage}>
+      <Container maxWidth="xl">
+        <div className={styles.header}>
+          <Typography variant="h1" component="h1" className={styles.title}>
+            {t("home.title")}
+          </Typography>
+          <Typography variant="h6" className={styles.subtitle}>
+            {t("home.subtitle")}
+          </Typography>
+        </div>
+
+        <div className={styles.filtersSection}>
+          <EventFilters filters={filters} onFiltersChange={setFilters} />
+        </div>
+
+        <div className={styles.contentSection}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="event view tabs"
+          >
+            <Tab label={t("home.tabs.list")} />
+            <Tab label={t("home.tabs.map")} />
+          </Tabs>
+
+          <TabPanel value={tabValue} index={0}>
+            <div className={styles.eventsList}>
+              {data &&
+                data.map((event) => <EventCard key={event.id} event={event} />)}
+            </div>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={1}>
+            <div className={styles.mapContainer}>
+              <EventMap events={data ? data : []} />
+            </div>
+          </TabPanel>
+        </div>
+      </Container>
+    </div>
+  );
 }

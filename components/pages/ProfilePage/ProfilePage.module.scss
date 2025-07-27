@@ -1,0 +1,22 @@
+.container {
+  padding: 2rem 0;
+}
+
+.section {
+  padding: 2rem;
+  height: fit-content;
+}
+
+.carsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.carCard {
+  border: 1px solid #e0e0e0;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}

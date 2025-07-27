@@ -1,46 +1,87 @@
 {
-  "auth": {
-    "signIn": "Sign In",
-    "signUp": "Sign Up",
-    "signOut": "Sign Out",
-    "email": "Email",
-    "password": "Password",
-    "displayName": "Display Name",
-    "emailRequired": "Email is required",
-    "emailInvalid": "Invalid email format",
-    "passwordRequired": "Password is required",
-    "passwordMinLength": "Password must be at least 6 characters",
-    "signupSuccess": "Account created successfully! Please check your email to verify your account.",
-    "noAccount": "Don't have an account?",
-    "haveAccount": "Already have an account?"
+  "nav": {
+    "home": "Home",
+    "events": "Events",
+    "create": "Create Event",
+    "profile": "Profile",
+    "admin": "Admin",
+    "signin": "Sign In",
+    "signup": "Sign Up",
+    "signout": "Sign Out"
   },
-  "events": {
-    "title": "Motorsport Events",
-    "subtitle": "Discover and join drift and motorsport events across Poland",
-    "register": "Register",
-    "listView": "List View",
-    "mapView": "Map View",
-    "loadError": "Failed to load events. Please try again.",
-    "noEvents": "No events found matching your criteria.",
+  "home": {
+    "title": "DriftBase",
+    "subtitle": "Discover and join the best drift and motorsport events in your area",
+    "tabs": {
+      "list": "List View",
+      "map": "Map View"
+    }
+  },
+  "filters": {
+    "level": "Event Level",
     "levels": {
+      "all": "All Levels",
       "beginner": "Beginner",
       "street": "Street",
       "pro": "Professional"
     },
-    "filters": {
-      "level": "Level",
-      "allLevels": "All Levels",
-      "priceMin": "Min Price",
-      "priceMax": "Max Price",
-      "dateFrom": "From Date",
-      "dateTo": "To Date"
+    "price": "Price Range",
+    "date": "Date Range",
+    "apply": "Apply Filters",
+    "clear": "Clear Filters"
+  },
+  "events": {
+    "title": "Events",
+    "create": "Create Event",
+    "register": "Register",
+    "details": "View Details",
+    "price": "Price",
+    "date": "Date",
+    "location": "Location",
+    "level": "Level",
+    "status": {
+      "pending": "Pending Approval",
+      "approved": "Approved",
+      "rejected": "Rejected"
     }
   },
-  "navigation": {
-    "home": "Home",
-    "events": "Events",
-    "profile": "Profile",
-    "admin": "Admin",
-    "createEvent": "Create Event"
+  "auth": {
+    "signin": {
+      "title": "Sign In",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "signup_link": "Don't have an account? Sign up"
+    },
+    "signup": {
+      "title": "Sign Up",
+      "email": "Email",
+      "password": "Password",
+      "confirm_password": "Confirm Password",
+      "display_name": "Display Name",
+      "submit": "Sign Up",
+      "signin_link": "Already have an account? Sign in"
+    }
+  },
+  "create_event": {
+    "title": "Create New Event",
+    "form": {
+      "title": "Event Title",
+      "description": "Description",
+      "date": "Event Date",
+      "location": "Location",
+      "level": "Event Level",
+      "price": "Price (PLN)",
+      "submit": "Create Event"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit"
   }
 }

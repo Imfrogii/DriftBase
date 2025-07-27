@@ -1,220 +1,284 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import {
   Container,
   Paper,
-  Typography,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
+  Button,
   MenuItem,
   Box,
   Alert,
-} from "@mui/material"
-import { Button } from "@/components/common/Button/Button"
-import { useCreateEvent } from "@/lib/queries/events"
-import { useAuth } from "@/lib/hooks/useAuth"
-import { useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
-import styles from "./CreateEventPage.module.scss"
+  Typography,
+} from "@mui/material";
+import { useCreateEvent } from "@/lib/queries/events";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import styles from "./CreateEventPage.module.scss";
+import { LocationPicker } from "@/components/common/LocationPicker/LocationPicker";
+import { generateSlug } from "@/lib/helpers/slug";
+import { Navbar } from "@/components/layout/Navbar/Navbar";
 
 interface CreateEventFormData {
-  title: string
-  description: string
-  location_name: string
-  location_lat: number
-  location_lng: number
-  event_date: string
-  level: "beginner" | "street" | "pro"
-  price: number
+  title: string;
+  description: string;
+  location_name: string;
+  location_lat: number;
+  location_lng: number;
+  event_date: string;
+  level: "beginner" | "street" | "pro";
+  price: number;
+  max_drivers: number;
 }
 
 export function CreateEventPage() {
-  const t = useTranslations("events")
-  const { user } = useAuth()
-  const router = useRouter()
-  const createEventMutation = useCreateEvent()
-  const [error, setError] = useState<string | null>(null)
+  const t = useTranslations();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const createEventMutation = useCreateEvent();
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
+    null
+  );
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
-  } = useForm<CreateEventFormData>()
+    reset,
+  } = useForm<CreateEventFormData>();
 
-  React.useEffect(() => {
-    if (!user) {
-      router.push("/auth/signin")
+  const handleLocationSelect = (location: Location) => {
+    setSelectedLocation(location);
+    setValue("location_id", location.id);
+  };
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/signin");
     }
-  }, [user, router])
+  }, [user, loading, router]);
 
   const onSubmit = async (data: CreateEventFormData) => {
-    if (!user) return
+    setIsSubmitting(true);
+    setSubmitMessage(null);
 
-    setError(null)
+    if (!user) return;
+
+    setError(null);
 
     try {
+      const slug = generateSlug(
+        `${data.title} ${data.location_name} ${data.level}`
+      );
       await createEventMutation.mutateAsync({
         ...data,
         created_by: user.id,
         status: "pending",
-      })
+        slug,
+      });
 
-      router.push("/")
+      setSubmitMessage({
+        type: "success",
+        text: "Event created successfully! It will be reviewed by administrators before being published.",
+      });
+      reset();
     } catch (error: any) {
-      setError(error.message)
+      setSubmitMessage({
+        type: "error",
+        text: "Failed to create event. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  // Simple location picker (in a real app, you'd use a map picker)
-  const handleLocationClick = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setValue("location_lat", position.coords.latitude)
-          setValue("location_lng", position.coords.longitude)
-        },
-        () => {
-          // Default to Warsaw center
-          setValue("location_lat", 52.2297)
-          setValue("location_lng", 21.0122)
-        },
-      )
-    }
+  if (loading) {
+    return <div>{t("common.loading")}</div>;
   }
 
   if (!user) {
-    return null
+    return null;
   }
 
   return (
-    <Container maxWidth="md" className={styles.container}>
-      <Paper className={styles.paper}>
-        <Typography variant="h4" component="h1" className={styles.title}>
-          Create New Event
+    <div className={styles.createEventPage}>
+      {/* <Navbar /> */}
+
+      <Container maxWidth="md" className={styles.container}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+          {t("create_event.title")}
         </Typography>
 
-        {error && (
-          <Alert severity="error" className={styles.alert}>
-            {error}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          <TextField
-            fullWidth
-            label="Event Title"
-            {...register("title", { required: "Title is required" })}
-            error={!!errors.title}
-            helperText={errors.title?.message}
-          />
-
-          <TextField
-            fullWidth
-            label="Description"
-            multiline
-            rows={4}
-            {...register("description")}
-            error={!!errors.description}
-            helperText={errors.description?.message}
-          />
-
-          <TextField
-            fullWidth
-            label="Location Name"
-            placeholder="e.g., Warsaw Drift Track"
-            {...register("location_name")}
-            error={!!errors.location_name}
-            helperText={errors.location_name?.message}
-          />
-
-          <Box className={styles.locationInputs}>
+        <Paper className={styles.formPaper}>
+          {submitMessage && (
+            <Alert severity={submitMessage.type} sx={{ mb: 3 }}>
+              {submitMessage.text}
+            </Alert>
+          )}
+          <Box
+            component="form"
+            onSubmit={handleSubmit(onSubmit)}
+            className={styles.form}
+          >
             <TextField
-              label="Latitude"
-              type="number"
-              step="any"
-              {...register("location_lat", {
-                required: "Latitude is required",
-                valueAsNumber: true,
-              })}
-              error={!!errors.location_lat}
-              helperText={errors.location_lat?.message}
+              fullWidth
+              label={t("create_event.form.title")}
+              {...register("title", { required: "Title is required" })}
+              error={!!errors.title}
+              helperText={errors.title?.message}
+              margin="normal"
             />
+
             <TextField
-              label="Longitude"
+              fullWidth
+              label={t("create_event.form.description")}
+              multiline
+              rows={4}
+              {...register("description")}
+              error={!!errors.description}
+              helperText={errors.description?.message}
+              margin="normal"
+            />
+
+            <TextField
+              fullWidth
+              label={t("create_event.form.location")}
+              placeholder="e.g., Warsaw Drift Track"
+              {...register("location_name")}
+              error={!!errors.location_name}
+              helperText={errors.location_name?.message}
+              margin="normal"
+            />
+
+            {/* <Box className={styles.locationInputs}> */}
+            <Box sx={{ my: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Event Location
+              </Typography>
+              <LocationPicker
+                initialLocation={selectedLocation}
+                onLocationSelect={handleLocationSelect}
+              />
+            </Box>
+            {/* <TextField
+                label="Latitude"
+                type="number"
+                {...register("location_lat", {
+                  required: "Latitude is required",
+                })}
+                inputProps={{
+                  step: "any",
+                }}
+                error={!!errors.location_lat}
+                helperText={errors.location_lat?.message}
+                margin="normal"
+              />
+              <TextField
+                label="Longitude"
+                type="number"
+                {...register("location_lng", {
+                  required: "Longitude is required",
+                })}
+                inputProps={{
+                  step: "any",
+                }}
+                error={!!errors.location_lng}
+                helperText={errors.location_lng?.message}
+                margin="normal"
+              />
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={handleLocationClick}
+                className={styles.locationButton}
+              >
+                Use My Location
+              </Button> */}
+            {/* </Box> */}
+
+            <TextField
+              fullWidth
+              label={t("create_event.form.date")}
+              type="datetime-local"
+              {...register("event_date", { required: "Date is required" })}
+              error={!!errors.event_date}
+              helperText={errors.event_date?.message}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              margin="normal"
+            />
+
+            <TextField
+              fullWidth
+              select
+              label={t("create_event.form.level")}
+              {...register("level", { required: "Level is required" })}
+              error={!!errors.level}
+              helperText={errors.level?.message}
+              margin="normal"
+            >
+              <MenuItem value="beginner">
+                {t("filters.levels.beginner")}
+              </MenuItem>
+              <MenuItem value="street">{t("filters.levels.street")}</MenuItem>
+              <MenuItem value="pro">{t("filters.levels.pro")}</MenuItem>
+            </TextField>
+
+            <TextField
+              label={t("create_event.form.driversCount")}
               type="number"
-              step="any"
-              {...register("location_lng", {
-                required: "Longitude is required",
+              {...register("max_drivers", {
+                required: "Drivers count is required",
                 valueAsNumber: true,
               })}
               error={!!errors.location_lng}
               helperText={errors.location_lng?.message}
+              margin="normal"
             />
-            <Button type="button" variant="outlined" onClick={handleLocationClick} className={styles.locationButton}>
-              Use My Location
+
+            <TextField
+              fullWidth
+              label={t("create_event.form.price")}
+              type="number"
+              {...register("price", {
+                required: "Price is required",
+                valueAsNumber: true,
+                min: { value: 0, message: "Price must be positive" },
+              })}
+              error={!!errors.price}
+              helperText={errors.price?.message}
+              margin="normal"
+              InputProps={{
+                inputProps: { min: 0, step: 10 },
+              }}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              disabled={isSubmitting}
+              className={styles.submitButton}
+            >
+              {isSubmitting
+                ? t("common.loading")
+                : t("create_event.form.submit")}
             </Button>
           </Box>
-
-          <TextField
-            fullWidth
-            label="Event Date"
-            type="datetime-local"
-            {...register("event_date", { required: "Date is required" })}
-            error={!!errors.event_date}
-            helperText={errors.event_date?.message}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-
-          <FormControl fullWidth>
-            <InputLabel>Level</InputLabel>
-            <Select
-              {...register("level", { required: "Level is required" })}
-              error={!!errors.level}
-              label="Level"
-              defaultValue=""
-            >
-              <MenuItem value="beginner">Beginner</MenuItem>
-              <MenuItem value="street">Street</MenuItem>
-              <MenuItem value="pro">Professional</MenuItem>
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            label="Price (PLN)"
-            type="number"
-            step="0.01"
-            {...register("price", {
-              required: "Price is required",
-              valueAsNumber: true,
-              min: { value: 0, message: "Price must be positive" },
-            })}
-            error={!!errors.price}
-            helperText={errors.price?.message}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            loading={createEventMutation.isPending}
-            className={styles.submitButton}
-          >
-            Create Event
-          </Button>
-
-          <Alert severity="info">Your event will be reviewed by administrators before being published.</Alert>
-        </Box>
-      </Paper>
-    </Container>
-  )
+        </Paper>
+      </Container>
+    </div>
+  );
 }

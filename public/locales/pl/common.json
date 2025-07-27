@@ -1,46 +1,87 @@
 {
-  "auth": {
-    "signIn": "Zaloguj się",
-    "signUp": "Zarejestruj się",
-    "signOut": "Wyloguj się",
-    "email": "Email",
-    "password": "Hasło",
-    "displayName": "Nazwa wyświetlana",
-    "emailRequired": "Email jest wymagany",
-    "emailInvalid": "Nieprawidłowy format email",
-    "passwordRequired": "Hasło jest wymagane",
-    "passwordMinLength": "Hasło musi mieć co najmniej 6 znaków",
-    "signupSuccess": "Konto zostało utworzone! Sprawdź email aby zweryfikować konto.",
-    "noAccount": "Nie masz konta?",
-    "haveAccount": "Masz już konto?"
+  "nav": {
+    "home": "Strona główna",
+    "events": "Wydarzenia",
+    "create": "Utwórz wydarzenie",
+    "profile": "Profil",
+    "admin": "Admin",
+    "signin": "Zaloguj się",
+    "signup": "Zarejestruj się",
+    "signout": "Wyloguj się"
   },
-  "events": {
-    "title": "Eventi Motorsportowe",
-    "subtitle": "Odkryj i dołącz do wydarzeń drift i motorsport w całej Polsce",
-    "register": "Zarejestruj się",
-    "listView": "Widok listy",
-    "mapView": "Widok mapy",
-    "loadError": "Nie udało się załadować wydarzeń. Spróbuj ponownie.",
-    "noEvents": "Nie znaleziono wydarzeń spełniających kryteria.",
+  "home": {
+    "title": "DriftBase",
+    "subtitle": "Odkryj i dołącz do najlepszych wydarzeń driftowych i motorsportowych w Twojej okolicy",
+    "tabs": {
+      "list": "Widok listy",
+      "map": "Widok mapy"
+    }
+  },
+  "filters": {
+    "level": "Poziom wydarzenia",
     "levels": {
+      "all": "Wszystkie poziomy",
       "beginner": "Początkujący",
       "street": "Uliczny",
       "pro": "Profesjonalny"
     },
-    "filters": {
-      "level": "Poziom",
-      "allLevels": "Wszystkie poziomy",
-      "priceMin": "Cena min",
-      "priceMax": "Cena max",
-      "dateFrom": "Od daty",
-      "dateTo": "Do daty"
+    "price": "Zakres cen",
+    "date": "Zakres dat",
+    "apply": "Zastosuj filtry",
+    "clear": "Wyczyść filtry"
+  },
+  "events": {
+    "title": "Wydarzenia",
+    "create": "Utwórz wydarzenie",
+    "register": "Zarejestruj się",
+    "details": "Zobacz szczegóły",
+    "price": "Cena",
+    "date": "Data",
+    "location": "Lokalizacja",
+    "level": "Poziom",
+    "status": {
+      "pending": "Oczekuje na zatwierdzenie",
+      "approved": "Zatwierdzone",
+      "rejected": "Odrzucone"
     }
   },
-  "navigation": {
-    "home": "Strona główna",
-    "events": "Wydarzenia",
-    "profile": "Profil",
-    "admin": "Admin",
-    "createEvent": "Utwórz wydarzenie"
+  "auth": {
+    "signin": {
+      "title": "Zaloguj się",
+      "email": "Email",
+      "password": "Hasło",
+      "submit": "Zaloguj się",
+      "signup_link": "Nie masz konta? Zarejestruj się"
+    },
+    "signup": {
+      "title": "Zarejestruj się",
+      "email": "Email",
+      "password": "Hasło",
+      "confirm_password": "Potwierdź hasło",
+      "display_name": "Nazwa wyświetlana",
+      "submit": "Zarejestruj się",
+      "signin_link": "Masz już konto? Zaloguj się"
+    }
+  },
+  "create_event": {
+    "title": "Utwórz nowe wydarzenie",
+    "form": {
+      "title": "Tytuł wydarzenia",
+      "description": "Opis",
+      "date": "Data wydarzenia",
+      "location": "Lokalizacja",
+      "level": "Poziom wydarzenia",
+      "price": "Cena (PLN)",
+      "submit": "Utwórz wydarzenie"
+    }
+  },
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Wystąpił błąd",
+    "success": "Sukces",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "delete": "Usuń",
+    "edit": "Edytuj"
   }
 }

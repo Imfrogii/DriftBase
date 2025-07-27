@@ -1,28 +1,50 @@
-"use client"
-import { FormControl, InputLabel, Select, MenuItem, TextField, Paper, Grid } from "@mui/material"
-import { useTranslations } from "next-intl"
-import styles from "./EventFilters.module.scss"
+"use client";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Paper,
+  Grid,
+} from "@mui/material";
+import { useTranslations } from "next-intl";
+import styles from "./EventFilters.module.scss";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface EventFiltersProps {
   filters: {
-    level: string
-    priceMin: string
-    priceMax: string
-    dateFrom: string
-    dateTo: string
-  }
-  onFiltersChange: (filters: any) => void
+    level: string;
+    priceMin: string;
+    priceMax: string;
+    dateFrom: string;
+    dateTo: string;
+  };
+  onFiltersChange: (filters: any) => void;
 }
 
 export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
-  const t = useTranslations("events")
+  const t = useTranslations("events");
 
-  const handleFilterChange = (field: string, value: string) => {
+  const handleFilterChange = (
+    field: string,
+    value: string | (Date | null)[]
+  ) => {
+    if (field === "dates") {
+      const [startDate, endDate] = value as (Date | null)[];
+      onFiltersChange({
+        ...filters,
+        dateFrom: startDate ? startDate.toISOString() : null,
+        dateTo: endDate ? endDate.toISOString() : null,
+      });
+      return;
+    }
     onFiltersChange({
       ...filters,
       [field]: value,
-    })
-  }
+    });
+  };
 
   return (
     <Paper className={styles.filtersContainer}>
@@ -71,8 +93,8 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={2.4}>
-          <TextField
+        <Grid item xs={12} sm={8} md={4}>
+          {/* <TextField
             fullWidth
             size="small"
             label={t("filters.dateFrom")}
@@ -82,10 +104,27 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
             InputLabelProps={{
               shrink: true,
             }}
+          /> */}
+          <DatePicker
+            onChange={(values) => handleFilterChange("dates", values)}
+            startDate={filters.dateFrom ? new Date(filters.dateFrom) : null}
+            endDate={filters.dateTo ? new Date(filters.dateTo) : null}
+            selectsRange
+            wrapperClassName={styles.datePicker}
+            customInput={
+              <TextField
+                fullWidth
+                size="small"
+                label={t("filters.dateRange")}
+                disabled={true}
+                value={filters.dateFrom}
+              />
+            }
+            isClearable={true}
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={2.4}>
+        {/* <Grid item xs={12} sm={6} md={2.4}>
           <TextField
             fullWidth
             size="small"
@@ -97,8 +136,8 @@ export function EventFilters({ filters, onFiltersChange }: EventFiltersProps) {
               shrink: true,
             }}
           />
-        </Grid>
+        </Grid> */}
       </Grid>
     </Paper>
-  )
+  );
 }

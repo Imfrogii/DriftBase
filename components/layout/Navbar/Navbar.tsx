@@ -1,7 +1,10 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
+import type React from "react";
+
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useRouter, usePathname } from "next/navigation";
 import {
   AppBar,
   Toolbar,
@@ -11,161 +14,246 @@ import {
   Menu,
   MenuItem,
   Box,
-  Avatar,
+  Container,
+  useMediaQuery,
+  useTheme,
   Drawer,
   List,
   ListItem,
   ListItemText,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material"
-import { Menu as MenuIcon, AccountCircle, DirectionsCar } from "@mui/icons-material"
-import { useAuth } from "@/lib/hooks/useAuth"
-import { useTranslations } from "next-intl"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import styles from "./Navbar.module.scss"
+} from "@mui/material";
+import { Menu as MenuIcon, AccountCircle, Language } from "@mui/icons-material";
+import styles from "./Navbar.module.scss";
+import { useAuth } from "@/lib/hooks/useAuth";
 
-export function Navbar() {
-  const t = useTranslations("navigation")
-  const { user, dbUser, signOut } = useAuth()
-  const router = useRouter()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
+export function Navbar({ locale }: { locale: string }) {
+  const t = useTranslations();
+  const router = useRouter();
+  const pathname = usePathname();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { dbUser, signOut } = useAuth();
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [langAnchorEl, setLangAnchorEl] = useState<null | HTMLElement>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget)
-  }
+    setAnchorEl(event.currentTarget);
+  };
 
   const handleClose = () => {
-    setAnchorEl(null)
-  }
+    setAnchorEl(null);
+  };
 
-  const handleSignOut = async () => {
-    await signOut()
-    handleClose()
-    router.push("/")
-  }
+  const handleLangMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setLangAnchorEl(event.currentTarget);
+  };
 
-  const navigationItems = [
-    { label: t("home"), href: "/" },
-    { label: t("events"), href: "/events" },
-    ...(user ? [{ label: t("createEvent"), href: "/events/create" }] : []),
-    ...(dbUser?.role === "admin" ? [{ label: t("admin"), href: "/admin" }] : []),
-  ]
+  const handleLangClose = () => {
+    setLangAnchorEl(null);
+  };
 
-  const renderMobileMenu = () => (
-    <Drawer anchor="left" open={mobileOpen} onClose={() => setMobileOpen(false)}>
-      <List sx={{ width: 250 }}>
-        {navigationItems.map((item) => (
-          <ListItem key={item.href} component={Link} href={item.href} onClick={() => setMobileOpen(false)}>
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+    setMobileOpen(false);
+  };
+
+  const changeLanguage = (locale: string) => {
+    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${locale}`);
+    router.push(newPath);
+    handleLangClose();
+  };
+
+  const navItems = [
+    { label: t("nav.home"), path: "/" },
+    { label: t("nav.events"), path: "/events" },
+    ...(dbUser
+      ? [
+          { label: t("nav.create"), path: `/${locale}/events/create` },
+          { label: t("nav.profile"), path: `/${locale}/profile` },
+        ]
+      : []),
+  ];
+
+  const drawer = (
+    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
+      <Typography variant="h6" sx={{ my: 2 }}>
+        DriftBase
+      </Typography>
+      <List>
+        {navItems.map((item) => (
+          <ListItem key={item.path} onClick={() => handleNavigation(item.path)}>
             <ListItemText primary={item.label} />
           </ListItem>
         ))}
-        {!user && (
+        {!dbUser && (
           <>
-            <ListItem component={Link} href="/auth/signin" onClick={() => setMobileOpen(false)}>
-              <ListItemText primary={t("signIn")} />
+            <ListItem
+              onClick={() => handleNavigation(`/${locale}/auth/signin`)}
+            >
+              <ListItemText primary={t("nav.signin")} />
             </ListItem>
-            <ListItem component={Link} href="/auth/signup" onClick={() => setMobileOpen(false)}>
-              <ListItemText primary={t("signUp")} />
+            <ListItem
+              onClick={() => handleNavigation(`/${locale}/auth/signup`)}
+            >
+              <ListItemText primary={t("nav.signup")} />
             </ListItem>
           </>
         )}
       </List>
-    </Drawer>
-  )
+    </Box>
+  );
 
   return (
     <>
-      <AppBar position="sticky" className={styles.appBar}>
-        <Toolbar>
-          {isMobile && (
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={() => setMobileOpen(true)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
+      <AppBar position="static" className={styles.navbar}>
+        <Container maxWidth="xl">
+          <Toolbar>
+            {isMobile && (
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
 
-          <Link href="/" className={styles.logo}>
-            <DirectionsCar sx={{ mr: 1 }} />
-            <Typography variant="h6" component="div">
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ flexGrow: isMobile ? 1 : 0, mr: 4, cursor: "pointer" }}
+              onClick={() => handleNavigation("/")}
+            >
               DriftBase
             </Typography>
-          </Link>
 
-          {!isMobile && (
-            <Box sx={{ flexGrow: 1, display: "flex", ml: 4 }}>
-              {navigationItems.map((item) => (
-                <Button key={item.href} color="inherit" component={Link} href={item.href} sx={{ mx: 1 }}>
-                  {item.label}
-                </Button>
-              ))}
-            </Box>
-          )}
+            {!isMobile && (
+              <Box sx={{ flexGrow: 1, display: "flex", gap: 2 }}>
+                {navItems.map((item) => (
+                  <Button
+                    key={item.path}
+                    color="inherit"
+                    onClick={() => handleNavigation(item.path)}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </Box>
+            )}
 
-          <Box sx={{ flexGrow: isMobile ? 1 : 0 }} />
-
-          {user ? (
-            <div>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <IconButton
                 size="large"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
+                aria-label="change language"
+                aria-controls="language-menu"
                 aria-haspopup="true"
-                onClick={handleMenu}
+                onClick={handleLangMenu}
                 color="inherit"
               >
-                {dbUser?.avatar_url ? (
-                  <Avatar src={dbUser.avatar_url} sx={{ width: 32, height: 32 }} />
-                ) : (
-                  <AccountCircle />
-                )}
+                <Language />
               </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                <MenuItem component={Link} href="/profile" onClick={handleClose}>
-                  {t("profile")}
-                </MenuItem>
-                <MenuItem onClick={handleSignOut}>{t("signOut")}</MenuItem>
-              </Menu>
-            </div>
-          ) : (
-            !isMobile && (
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button color="inherit" component={Link} href="/auth/signin">
-                  Sign In
-                </Button>
-                <Button variant="outlined" color="inherit" component={Link} href="/auth/signup">
-                  Sign Up
-                </Button>
-              </Box>
-            )
-          )}
-        </Toolbar>
+
+              {dbUser ? (
+                <>
+                  <IconButton
+                    size="large"
+                    aria-label="account of current user"
+                    aria-controls="menu-appbar"
+                    aria-haspopup="true"
+                    onClick={handleMenu}
+                    color="inherit"
+                  >
+                    <AccountCircle />
+                  </IconButton>
+                  <Menu
+                    id="menu-appbar"
+                    anchorEl={anchorEl}
+                    anchorOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
+                    }}
+                    keepMounted
+                    transformOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
+                    }}
+                    open={Boolean(anchorEl)}
+                    onClose={handleClose}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        handleClose();
+                        handleNavigation(`/${locale}/profile`);
+                      }}
+                    >
+                      {t("nav.profile")}
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        signOut();
+                        handleClose();
+                      }}
+                    >
+                      {t("nav.signout")}
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                !isMobile && (
+                  <>
+                    <Button
+                      color="inherit"
+                      onClick={() => handleNavigation(`/${locale}/auth/signin`)}
+                    >
+                      {t("nav.signin")}
+                    </Button>
+                    <Button
+                      color="inherit"
+                      onClick={() => handleNavigation(`/${locale}/auth/signup`)}
+                    >
+                      {t("nav.signup")}
+                    </Button>
+                  </>
+                )
+              )}
+            </Box>
+
+            <Menu
+              id="language-menu"
+              anchorEl={langAnchorEl}
+              open={Boolean(langAnchorEl)}
+              onClose={handleLangClose}
+            >
+              <MenuItem onClick={() => changeLanguage("pl")}>Polski</MenuItem>
+              <MenuItem onClick={() => changeLanguage("en")}>English</MenuItem>
+              <MenuItem onClick={() => changeLanguage("ru")}>Русский</MenuItem>
+            </Menu>
+          </Toolbar>
+        </Container>
       </AppBar>
-      {renderMobileMenu()}
+
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { boxSizing: "border-box", width: 240 },
+        }}
+      >
+        {drawer}
+      </Drawer>
     </>
-  )
+  );
 }

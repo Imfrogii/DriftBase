@@ -1,0 +1,43 @@
+.container {
+  padding: 2rem 0;
+}
+
+.eventCard {
+  margin-bottom: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.participants {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.participant {
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.registrationForm {
+  padding: 2rem;
+}
+
+.carOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

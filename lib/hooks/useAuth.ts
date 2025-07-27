@@ -1,59 +1,83 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import type { User } from "@supabase/auth-helpers-nextjs"
-import { supabase } from "@/lib/supabase/client"
-import type { User as DbUser } from "@/lib/supabase/types"
+import {
+  AuthContextType,
+  AuthContext,
+} from "@/components/providers/AuthProvider";
+import { useContext } from "react";
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [dbUser, setDbUser] = useState<DbUser | null>(null)
-  const [loading, setLoading] = useState(true)
+// import { useEffect, useState } from "react";
+// import type { User } from "@supabase/auth-helpers-nextjs";
+// import { supabase } from "@/lib/supabase/client";
+// import type { User as DbUser } from "@/lib/supabase/types";
 
-  useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
+// export function useAuth() {
+// const [user, setUser] = useState<User | null>(null);
+// const [dbUser, setDbUser] = useState<DbUser | null>(null);
+// const [loading, setLoading] = useState(true);
 
-      if (user) {
-        const { data: dbUser } = await supabase.from("users").select("*").eq("id", user.id).single()
-        setDbUser(dbUser)
-      }
+// useEffect(() => {
+//   const getUser = async () => {
+//     const {
+//       data: { user },
+//     } = await supabase.auth.getUser();
+//     setUser(user);
 
-      setLoading(false)
-    }
+//     if (user) {
+//       const { data: dbUser } = await supabase
+//         .from("users")
+//         .select("*")
+//         .eq("id", user.id)
+//         .single();
+//       setDbUser(dbUser);
+//     }
 
-    getUser()
+//     setLoading(false);
+//   };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
+//   if (user || loading) return;
 
-      if (session?.user) {
-        const { data: dbUser } = await supabase.from("users").select("*").eq("id", session.user.id).single()
-        setDbUser(dbUser)
-      } else {
-        setDbUser(null)
-      }
+//   getUser();
 
-      setLoading(false)
-    })
+//   const {
+//     data: { subscription },
+//   } = supabase.auth.onAuthStateChange(async (event, session) => {
+//     setUser(session?.user ?? null);
 
-    return () => subscription.unsubscribe()
-  }, [])
+//     if (session?.user) {
+//       const { data: dbUser } = await supabase
+//         .from("users")
+//         .select("*")
+//         .eq("id", session.user.id)
+//         .single();
+//       setDbUser(dbUser);
+//     } else {
+//       setDbUser(null);
+//     }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+//     setLoading(false);
+//   });
+
+//   return () => subscription.unsubscribe();
+// }, []);
+
+// const signOut = async () => {
+//   await supabase.auth.signOut();
+// };
+
+//   return {
+//     user,
+//     dbUser,
+//     loading,
+//     signOut,
+//     isAdmin: dbUser?.role === "admin",
+//   };
+// }
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-
-  return {
-    user,
-    dbUser,
-    loading,
-    signOut,
-    isAdmin: dbUser?.role === "admin",
-  }
-}
+  return context;
+};

@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Dialog,
   DialogTitle,
@@ -13,65 +13,40 @@ import {
   Fab,
   TextField,
   Alert,
-} from "@mui/material";
-import { Close, MyLocation, Add } from "@mui/icons-material";
-import Map, {
-  Marker,
-  NavigationControl,
-  GeolocateControl,
-} from "react-map-gl/maplibre";
-import type { MapRef, ViewState } from "react-map-gl/maplibre";
-import { useLocationSearch } from "@/lib/hooks/useLocationSearch";
-import type { Location } from "@/lib/types/location";
-import styles from "./MapModal.module.scss";
-import "maplibre-gl/dist/maplibre-gl.css";
-import SetLocationSVG from "@/components/icons/SetLocationIcon";
-import EventLocationSVG from "@/components/icons/EventLocationIcon";
+} from "@mui/material"
+import { Close, MyLocation, Add } from "@mui/icons-material"
+import Map, { Marker, NavigationControl, GeolocateControl } from "react-map-gl/maplibre"
+import type { MapRef, ViewState } from "react-map-gl/maplibre"
+import { useDeviceDetection } from "@/lib/hooks/useDeviceDetection"
+import { useLocationSearch } from "@/lib/hooks/useLocationSearch"
+import type { Location } from "@/lib/types/location"
+import styles from "./MapModal.module.scss"
 
 interface MapModalProps {
-  open: boolean;
-  onClose: () => void;
-  selectedLocation: Location | null;
-  onLocationSelect: (location: Location) => void;
+  open: boolean
+  onClose: () => void
+  selectedLocation: Location | null
+  onLocationSelect: (location: Location) => void
 }
 
 const INITIAL_VIEW_STATE = {
   longitude: 21.0122,
   latitude: 52.2297,
   zoom: 10,
-};
+}
 
-export function MapModal({
-  open,
-  onClose,
-  selectedLocation,
-  onLocationSelect,
-  isTouchDevice = false,
-}: MapModalProps) {
-  const mapRef = useRef<MapRef>(null);
-  //   const { isTouchDevice } = useDeviceDetection();
+export function MapModal({ open, onClose, selectedLocation, onLocationSelect }: MapModalProps) {
+  const mapRef = useRef<MapRef>(null)
+  const { isTouchDevice } = useDeviceDetection()
 
-  const [viewState, setViewState] = useState<ViewState>(INITIAL_VIEW_STATE);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
-    null
-  );
-  const [centerPosition, setCenterPosition] = useState<[number, number]>([
-    52.2297, 21.0122,
-  ]);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newLocationName, setNewLocationName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null
-  );
+  const [viewState, setViewState] = useState<ViewState>(INITIAL_VIEW_STATE)
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null)
+  const [centerPosition, setCenterPosition] = useState<[number, number]>([52.2297, 21.0122])
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [newLocationName, setNewLocationName] = useState("")
+  const [isCreating, setIsCreating] = useState(false)
 
-  const {
-    nearbyLocations,
-    fetchLocationsInBounds,
-    createLocation,
-    error,
-    clearError,
-  } = useLocationSearch();
+  const { nearbyLocations, fetchLocationsInBounds, createLocation, error, clearError } = useLocationSearch()
 
   // Initialize map position based on selected location
   useEffect(() => {
@@ -80,57 +55,50 @@ export function MapModal({
         longitude: selectedLocation.longitude,
         latitude: selectedLocation.latitude,
         zoom: 15,
-      };
-      setViewState(newViewState);
-      setMarkerPosition([
-        selectedLocation.latitude,
-        selectedLocation.longitude,
-      ]);
-      setCenterPosition([
-        selectedLocation.latitude,
-        selectedLocation.longitude,
-      ]);
+      }
+      setViewState(newViewState)
+      setMarkerPosition([selectedLocation.latitude, selectedLocation.longitude])
+      setCenterPosition([selectedLocation.latitude, selectedLocation.longitude])
     } else if (open) {
       // Try to get user's current location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { latitude, longitude } = position.coords;
+            const { latitude, longitude } = position.coords
             const newViewState = {
               longitude,
               latitude,
               zoom: 12,
-            };
-            setViewState(newViewState);
-            setUserLocation([latitude, longitude]);
-            setCenterPosition([latitude, longitude]);
+            }
+            setViewState(newViewState)
+            setCenterPosition([latitude, longitude])
           },
           () => {
             // Fallback to default location
-            setCenterPosition([52.2297, 21.0122]);
-          }
-        );
+            setCenterPosition([52.2297, 21.0122])
+          },
+        )
       }
     }
-  }, [open, selectedLocation]);
+  }, [open, selectedLocation])
 
   // Update center position when map moves (for touch devices)
   const handleMove = useCallback(
     (evt: { viewState: ViewState }) => {
-      setViewState(evt.viewState);
+      setViewState(evt.viewState)
       if (isTouchDevice) {
-        setCenterPosition([evt.viewState.latitude, evt.viewState.longitude]);
+        setCenterPosition([evt.viewState.latitude, evt.viewState.longitude])
       }
     },
-    [isTouchDevice]
-  );
+    [isTouchDevice],
+  )
 
   // Fetch nearby locations when map bounds change
   const handleMoveEnd = useCallback(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current) return
 
-    const map = mapRef.current.getMap();
-    const bounds = map.getBounds();
+    const map = mapRef.current.getMap()
+    const bounds = map.getBounds()
 
     if (viewState.zoom >= 8) {
       fetchLocationsInBounds({
@@ -142,84 +110,72 @@ export function MapModal({
           getWest: () => bounds.getWest(),
         } as any,
         zoom: viewState.zoom,
-      });
+      })
     }
-  }, [viewState, fetchLocationsInBounds]);
+  }, [viewState, fetchLocationsInBounds])
 
   // Handle map click (desktop only)
   const handleMapClick = useCallback(
     (event: any) => {
-      if (isTouchDevice) return; // Disable click on touch devices
+      if (isTouchDevice) return // Disable click on touch devices
 
-      const { lngLat } = event;
-      setMarkerPosition([lngLat.lat, lngLat.lng]);
+      const { lngLat } = event
+      setMarkerPosition([lngLat.lat, lngLat.lng])
     },
-    [isTouchDevice]
-  );
+    [isTouchDevice],
+  )
 
   // Handle marker drag (desktop only)
   const handleMarkerDrag = useCallback(
     (event: any) => {
-      if (isTouchDevice) return;
+      if (isTouchDevice) return
 
-      const { lngLat } = event;
-      setMarkerPosition([lngLat.lat, lngLat.lng]);
+      const { lngLat } = event
+      setMarkerPosition([lngLat.lat, lngLat.lng])
     },
-    [isTouchDevice]
-  );
+    [isTouchDevice],
+  )
 
   // Handle existing location marker click
   const handleLocationMarkerClick = useCallback(
     (location: Location) => {
-      onLocationSelect(location);
-      onClose();
+      onLocationSelect(location)
+      onClose()
     },
-    [onLocationSelect, onClose]
-  );
+    [onLocationSelect, onClose],
+  )
 
   // Handle create location
   const handleCreateLocation = useCallback(async () => {
-    if (!newLocationName.trim()) return;
+    if (!newLocationName.trim()) return
 
-    const position = isTouchDevice ? centerPosition : markerPosition;
-    if (!position) return;
+    const position = isTouchDevice ? centerPosition : markerPosition
+    if (!position) return
 
-    setIsCreating(true);
+    setIsCreating(true)
     try {
-      const newLocation = await createLocation(
-        newLocationName,
-        position[0],
-        position[1]
-      );
-      onLocationSelect(newLocation);
-      onClose();
+      const newLocation = await createLocation(newLocationName, position[0], position[1])
+      onLocationSelect(newLocation)
+      onClose()
     } catch (error) {
-      console.error("Failed to create location:", error);
+      console.error("Failed to create location:", error)
     } finally {
-      setIsCreating(false);
-      setShowCreateDialog(false);
-      setNewLocationName("");
+      setIsCreating(false)
+      setShowCreateDialog(false)
+      setNewLocationName("")
     }
-  }, [
-    newLocationName,
-    isTouchDevice,
-    centerPosition,
-    markerPosition,
-    createLocation,
-    onLocationSelect,
-    onClose,
-  ]);
+  }, [newLocationName, isTouchDevice, centerPosition, markerPosition, createLocation, onLocationSelect, onClose])
 
   // Handle confirm selection
   const handleConfirmSelection = useCallback(() => {
-    const position = isTouchDevice ? centerPosition : markerPosition;
-    if (!position) return;
+    const position = isTouchDevice ? centerPosition : markerPosition
+    if (!position) return
 
-    setNewLocationName("");
-    setShowCreateDialog(true);
-  }, [isTouchDevice, centerPosition, markerPosition]);
+    setNewLocationName("")
+    setShowCreateDialog(true)
+  }, [isTouchDevice, centerPosition, markerPosition])
 
-  const currentPosition = isTouchDevice ? centerPosition : markerPosition;
+  const currentPosition = isTouchDevice ? centerPosition : markerPosition
 
   return (
     <Dialog
@@ -231,14 +187,7 @@ export function MapModal({
         sx: { m: 0 },
       }}
     >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          pb: 1,
-        }}
-      >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
         <Typography variant="h6">Select Event Location</Typography>
         <IconButton onClick={onClose}>
           <Close />
@@ -250,13 +199,7 @@ export function MapModal({
           <Alert
             severity="error"
             onClose={clearError}
-            sx={{
-              position: "absolute",
-              top: 16,
-              left: 16,
-              right: 16,
-              zIndex: 1000,
-            }}
+            sx={{ position: "absolute", top: 16, left: 16, right: 16, zIndex: 1000 }}
           >
             {error}
           </Alert>
@@ -269,10 +212,11 @@ export function MapModal({
           onMoveEnd={handleMoveEnd}
           onClick={handleMapClick}
           style={{ width: "100%", height: "100%" }}
-          mapStyle="https://api.maptiler.com/maps/01984cbc-fe5d-76ed-8656-eac8dfd8ec1d/style.json?key=zCfR02amxyJq9aMmU5Iy"
+          mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
         >
           <NavigationControl position="top-right" />
           <GeolocateControl position="top-right" />
+
           {/* Existing location markers */}
           {nearbyLocations.map((location) => (
             <Marker
@@ -281,34 +225,27 @@ export function MapModal({
               latitude={location.latitude}
               onClick={() => handleLocationMarkerClick(location)}
             >
-              {/* <Box className={styles.existingMarker}>
+              <Box className={styles.existingMarker}>
                 <Box className={styles.markerDot} />
-              </Box> */}
-              <EventLocationSVG />
+              </Box>
             </Marker>
           ))}
-          {/* Selected/draggable marker (desktop only) */}
+
+          {/* Selected/draggable marker (desktop only) */}
           {!isTouchDevice && markerPosition && (
-            <Marker
-              longitude={markerPosition[1]}
-              latitude={markerPosition[0]}
-              draggable
-              onDrag={handleMarkerDrag}
-            >
-              {/* <Box className={styles.selectedMarker}>
+            <Marker longitude={markerPosition[1]} latitude={markerPosition[0]} draggable onDrag={handleMarkerDrag}>
+              <Box className={styles.selectedMarker}>
                 <Box className={styles.markerPin} />
-              </Box> */}
-              <SetLocationSVG />
+              </Box>
             </Marker>
           )}
         </Map>
 
         {/* Fixed center marker for touch devices */}
         {isTouchDevice && (
-          //   <Box className={styles.centerMarker}>
-          //     <Box className={styles.centerPin} />
-          //   </Box>
-          <SetLocationSVG />
+          <Box className={styles.centerMarker}>
+            <Box className={styles.centerPin} />
+          </Box>
         )}
 
         {/* Instructions */}
@@ -319,6 +256,31 @@ export function MapModal({
               : "Click on the map or drag the marker to select a location"}
           </Typography>
         </Box>
+
+        {/* Current location button */}
+        <Fab
+          color="primary"
+          size="small"
+          className={styles.locationButton}
+          onClick={() => {
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition((position) => {
+                const { latitude, longitude } = position.coords
+                setViewState((prev) => ({
+                  ...prev,
+                  latitude,
+                  longitude,
+                  zoom: 15,
+                }))
+                if (!isTouchDevice) {
+                  setMarkerPosition([latitude, longitude])
+                }
+              })
+            }
+          }}
+        >
+          <MyLocation />
+        </Fab>
       </DialogContent>
 
       <DialogActions sx={{ p: 2, gap: 1 }}>
@@ -326,23 +288,13 @@ export function MapModal({
           Cancel
         </Button>
 
-        <Button
-          onClick={handleConfirmSelection}
-          variant="contained"
-          disabled={!currentPosition}
-          startIcon={<Add />}
-        >
+        <Button onClick={handleConfirmSelection} variant="contained" disabled={!currentPosition} startIcon={<Add />}>
           Select Location
         </Button>
       </DialogActions>
 
       {/* Create Location Dialog */}
-      <Dialog
-        open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Create New Location</DialogTitle>
         <DialogContent>
           <TextField
@@ -357,22 +309,17 @@ export function MapModal({
           />
           {currentPosition && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Coordinates: {currentPosition[0].toFixed(6)},{" "}
-              {currentPosition[1].toFixed(6)}
+              Coordinates: {currentPosition[0].toFixed(6)}, {currentPosition[1].toFixed(6)}
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowCreateDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleCreateLocation}
-            variant="contained"
-            disabled={!newLocationName.trim() || isCreating}
-          >
+          <Button onClick={handleCreateLocation} variant="contained" disabled={!newLocationName.trim() || isCreating}>
             {isCreating ? "Creating..." : "Create Location"}
           </Button>
         </DialogActions>
       </Dialog>
     </Dialog>
-  );
+  )
 }

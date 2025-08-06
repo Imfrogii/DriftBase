@@ -1,76 +1,82 @@
-"use client";
+'use client'
 
-import {
-  useEffect,
-  useState,
-  createContext,
-  useContext,
-  ReactNode,
-  Dispatch,
-  SetStateAction,
-} from "react";
-import type { User } from "@supabase/auth-helpers-nextjs";
-import { supabase } from "@/lib/supabase/client";
-import type { User as DbUser } from "@/lib/supabase/types";
+import { createContext, useContext, useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
 
-export interface AuthContextType {
-  setUser: Dispatch<SetStateAction<User | null>>;
-  user: User | null;
-  dbUser: DbUser | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-  isAdmin: boolean;
+type DbUser = Database['public']['Tables']['users']['Row']
+
+interface AuthContextType {
+  user: User | null
+  dbUser: DbUser | null
+  loading: boolean
+  signOut: () => Promise<void>
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  dbUser: null,
+  loading: true,
+  signOut: async () => {},
+})
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [dbUser, setDbUser] = useState<DbUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export function AuthProvider({
+  children,
+  initialUser,
+  initialDbUser,
+}: {
+  children: React.ReactNode
+  initialUser: User | null
+  initialDbUser: DbUser | null
+}) {
+  const [user, setUser] = useState<User | null>(initialUser)
+  const [dbUser, setDbUser] = useState<DbUser | null>(initialDbUser)
+  const [loading, setLoading] = useState(false)
+  const supabase = createClient()
 
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-
-      console.log("Auth state changed:", event, session);
+      setUser(session?.user ?? null)
+      
       if (session?.user) {
-        setLoading(true);
-        const { data: dbUser } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-        setDbUser(dbUser);
-        setLoading(false);
+        // Fetch user profile from database
+        const { data: dbUserData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+        
+        setDbUser(dbUserData)
       } else {
-        setDbUser(null);
+        setDbUser(null)
       }
-    });
+      
+      setLoading(false)
+    })
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => subscription.unsubscribe()
+  }, [supabase])
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+    await supabase.auth.signOut()
+    setUser(null)
+    setDbUser(null)
+  }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        loading,
-        signOut,
-        dbUser,
-        isAdmin: dbUser?.role === "admin",
-      }}
-    >
+    <AuthContext.Provider value={{ user, dbUser, loading, signOut }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}

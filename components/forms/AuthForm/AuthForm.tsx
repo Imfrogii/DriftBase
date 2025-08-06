@@ -1,56 +1,45 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import {
-  Box,
-  TextField,
-  Typography,
-  Paper,
-  Alert,
-  Link as MuiLink,
-} from "@mui/material";
-import { Button } from "@/components/common/Button/Button";
-import { supabase } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
-import Link from "next/link";
-import styles from "./AuthForm.module.scss";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { Box, TextField, Typography, Paper, Alert, Link as MuiLink } from "@mui/material"
+import { Button } from "@/components/common/Button/Button"
+import { supabase } from "@/lib/supabase/client"
+import { useTranslations } from "next-intl"
+import Link from "next/link"
+import styles from "./AuthForm.module.scss"
 
 interface AuthFormData {
-  email: string;
-  password: string;
-  displayName?: string;
+  email: string
+  password: string
+  displayName?: string
 }
 
 interface AuthFormProps {
-  mode: "signin" | "signup";
-  onSuccess?: () => void;
+  mode: "signin" | "signup"
+  onSuccess?: () => void
 }
 
 export function AuthForm({ mode, onSuccess }: AuthFormProps) {
-  const router = useRouter();
-  const { setUser } = useAuth();
-  const t = useTranslations("auth");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const t = useTranslations("auth")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<AuthFormData>();
+  } = useForm<AuthFormData>()
 
   const onSubmit = async (data: AuthFormData) => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
 
     try {
       if (mode === "signup") {
-        const { data: userData, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
           options: {
@@ -58,29 +47,25 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
               display_name: data.displayName,
             },
           },
-        });
+        })
 
-        if (error) throw error;
-        setSuccess(t("signupSuccess"));
-        // setUser(userData.user);
-        router.push("/");
+        if (error) throw error
+        setSuccess(t("signupSuccess"))
       } else {
-        const { data: userData, error } =
-          await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-          });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        })
 
-        if (error) throw error;
-        // setUser(userData.user);
-        router.push("/");
+        if (error) throw error
+        onSuccess?.()
       }
     } catch (error: any) {
-      setError(error.message);
+      setError(error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Paper className={styles.container}>
@@ -100,11 +85,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
         </Alert>
       )}
 
-      <Box
-        component="form"
-        onSubmit={handleSubmit(onSubmit)}
-        className={styles.form}
-      >
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} className={styles.form}>
         {mode === "signup" && (
           <TextField
             fullWidth
@@ -175,5 +156,5 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
         </Box>
       </Box>
     </Paper>
-  );
+  )
 }

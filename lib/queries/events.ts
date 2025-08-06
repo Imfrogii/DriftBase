@@ -1,238 +1,85 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import type {
-  Event,
-  EventWithCreator,
-  EventWithLocation,
-  EventWithRegistrations,
-  FullEventData,
-} from "@/lib/supabase/types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 export function useEvents(filters?: {
-  level?: string;
-  priceMin?: number;
-  priceMax?: number;
-  dateFrom?: string;
-  dateTo?: string;
+  level?: string
+  priceMin?: number
+  priceMax?: number
+  dateFrom?: string
+  dateTo?: string
 }) {
   return useQuery({
-    queryKey: ["events", filters],
+    queryKey: ['events', filters],
     queryFn: async () => {
-      let query = supabase
-        // .from("events")
-        // .select(
-        //   `
-        //   *,
-        //   creator:users!events_created_by_fkey(id, display_name, email)
-        // `
-        // )
-        // // .eq("status", "approved")
-        // .order("event_date", { ascending: true });
-        .from("events")
-        .select("*, location:locations(*)")
-        .is("deleted_at", null)
-        .order("event_date", { ascending: true });
+      const params = new URLSearchParams()
+      
+      if (filters?.level) params.append('level', filters.level)
+      if (filters?.priceMin !== undefined) params.append('priceMin', filters.priceMin.toString())
+      if (filters?.priceMax !== undefined) params.append('priceMax', filters.priceMax.toString())
+      if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom)
+      if (filters?.dateTo) params.append('dateTo', filters.dateTo)
 
-      if (filters?.level) {
-        query = query.eq("level", filters.level);
+      const response = await fetch(`/api/events?${params}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch events')
       }
-
-      if (filters?.priceMin !== undefined) {
-        query = query.gte("price", filters.priceMin);
-      }
-
-      if (filters?.priceMax !== undefined) {
-        query = query.lte("price", filters.priceMax);
-      }
-
-      if (filters?.dateFrom) {
-        query = query.gte("event_date", filters.dateFrom);
-      }
-
-      if (filters?.dateTo) {
-        query = query.lte("event_date", filters.dateTo);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as EventWithCreator[];
+      
+      const data = await response.json()
+      return data.events
     },
-  });
+  })
 }
 
-export function useMyEvents(
-  filters?: {
-    level?: string;
-    priceMin?: number;
-    priceMax?: number;
-    dateFrom?: string;
-    dateTo?: string;
-  },
-  userId?: string
-) {
+export function useMyEvents(filters?: {
+  level?: string
+  priceMin?: number
+  priceMax?: number
+  dateFrom?: string
+  dateTo?: string
+}) {
   return useQuery({
-    queryKey: ["my-events", filters, userId],
+    queryKey: ['my-events', filters],
     queryFn: async () => {
-      let query = supabase
-        .from("events")
-        .select("*, location:locations(*),")
-        .is("deleted_at", null)
-        .eq("created_by", userId)
-        .order("event_date", { ascending: true });
+      const params = new URLSearchParams()
+      
+      if (filters?.level) params.append('level', filters.level)
+      if (filters?.priceMin !== undefined) params.append('priceMin', filters.priceMin.toString())
+      if (filters?.priceMax !== undefined) params.append('priceMax', filters.priceMax.toString())
+      if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom)
+      if (filters?.dateTo) params.append('dateTo', filters.dateTo)
 
-      if (filters?.level) {
-        query = query.eq("level", filters.level);
+      const response = await fetch(`/api/events/my-events?${params}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch my events')
       }
-
-      if (filters?.priceMax !== undefined) {
-        query = query.lte("price", filters.priceMax);
-      }
-
-      if (filters?.dateFrom) {
-        query = query.gte("event_date", filters.dateFrom);
-      }
-
-      if (filters?.dateTo) {
-        query = query.lte("event_date", filters.dateTo);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as EventWithLocation[];
+      
+      const data = await response.json()
+      return data.events
     },
-  });
-}
-
-export function useEvent(eventSlug: string) {
-  const { data: id, isLoading: isLoadingId } = useQuery({
-    queryKey: ["event-id", eventSlug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("id")
-        .eq("slug", eventSlug)
-        .single();
-
-      if (error) throw error;
-      return data.id as string;
-    },
-  });
-
-  const { data, isLoading } = useQuery({
-    enabled: !!id,
-    queryKey: ["event", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select(
-          `
-          *,
-          creator:users!events_created_by_fkey(id, display_name, email),
-          registrations(
-            *,
-            user:users(id, display_name, email),
-            car:cars(id, make, model, year)
-          )
-        `
-        )
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-      return data as FullEventData;
-    },
-  });
-
-  return { data, isLoading: isLoading || isLoadingId };
+  })
 }
 
 export function useCreateEvent() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (
-      eventData: Omit<
-        Event,
-        "id" | "created_at" | "updated_at" | "registered_drivers" | "deleted_at"
-      >
-    ) => {
-      const { data, error } = await supabase
-        .from("events")
-        .insert(eventData)
-        .select()
-        .single();
+    mutationFn: async (eventData: any) => {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventData),
+      })
 
-      if (error) throw error;
-      return data;
+      if (!response.ok) {
+        throw new Error('Failed to create event')
+      }
+
+      return response.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      queryClient.invalidateQueries({ queryKey: ['my-events'] })
     },
-  });
-}
-
-export function useUpdateEvent() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      event_id,
-      eventData,
-    }: {
-      event_id: string;
-      eventData: Omit<
-        Event,
-        "created_at" | "updated_at" | "registered_drivers" | "deleted_at"
-      >;
-    }) => {
-      const { data, error } = await supabase
-        .from("events")
-        .update(eventData)
-        .eq("slug", event_id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({
-        queryKey: ["event", vars.event_id],
-      });
-    },
-  });
-}
-
-export function useUpdateEventStatus() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      event_id,
-      status,
-    }: {
-      event_id: string;
-      status: "approved" | "rejected";
-    }) => {
-      const { data, error } = await supabase
-        .from("events")
-        .update({ status })
-        .eq("slug", event_id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({
-        queryKey: ["event", vars.event_id],
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin-events"] });
-    },
-  });
+  })
 }

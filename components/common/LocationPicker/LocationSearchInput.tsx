@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import React from "react";
+import React from "react"
 
-import { useState } from "react";
+import { useState } from "react"
 import {
   TextField,
   Button,
@@ -14,59 +14,54 @@ import {
   Typography,
   CircularProgress,
   Chip,
-} from "@mui/material";
-import { Search, LocationOn, Map } from "@mui/icons-material";
-import { useDebounce } from "@/lib/hooks/useDebounce";
-import { useLocationSearch } from "@/lib/hooks/useLocationSearch";
-import type { Location } from "@/lib/types/location";
-import styles from "./LocationSearchInput.module.scss";
+} from "@mui/material"
+import { Search, LocationOn, Map } from "@mui/icons-material"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useLocationSearch } from "@/lib/hooks/useLocationSearch"
+import type { Location } from "@/lib/types/location"
+import styles from "./LocationSearchInput.module.scss"
 
 interface LocationSearchInputProps {
-  selectedLocation: Location | null;
-  onLocationSelect: (location: Location) => void;
-  onMapOpen: () => void;
+  selectedLocation: Location | null
+  onLocationSelect: (location: Location) => void
+  onMapOpen: () => void
 }
 
-export function LocationSearchInput({
-  selectedLocation,
-  onLocationSelect,
-  onMapOpen,
-}: LocationSearchInputProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showResults, setShowResults] = useState(false);
+export function LocationSearchInput({ selectedLocation, onLocationSelect, onMapOpen }: LocationSearchInputProps) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [showResults, setShowResults] = useState(false)
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const { searchResults, loading, searchLocations, clearSearchResults } =
-    useLocationSearch();
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const { searchResults, loading, searchLocations, clearSearchResults } = useLocationSearch()
 
   // Search when debounced query changes
   React.useEffect(() => {
     if (debouncedSearchQuery.trim()) {
-      searchLocations(debouncedSearchQuery);
-      setShowResults(true);
+      searchLocations(debouncedSearchQuery)
+      setShowResults(true)
     } else {
-      clearSearchResults();
-      setShowResults(false);
+      clearSearchResults()
+      setShowResults(false)
     }
-  }, [debouncedSearchQuery, searchLocations, clearSearchResults]);
+  }, [debouncedSearchQuery, searchLocations, clearSearchResults])
 
   const handleLocationSelect = (location: Location) => {
-    onLocationSelect(location);
-    setSearchQuery("");
-    setShowResults(false);
-    clearSearchResults();
-  };
+    onLocationSelect(location)
+    setSearchQuery("")
+    setShowResults(false)
+    clearSearchResults()
+  }
 
   const handleInputFocus = () => {
     if (searchQuery.trim() && searchResults.length > 0) {
-      setShowResults(true);
+      setShowResults(true)
     }
-  };
+  }
 
   const handleInputBlur = () => {
     // Delay hiding results to allow clicking on them
-    setTimeout(() => setShowResults(false), 200);
-  };
+    setTimeout(() => setShowResults(false), 200)
+  }
 
   return (
     <Box className={styles.container}>
@@ -85,12 +80,7 @@ export function LocationSearchInput({
           variant="outlined"
         />
 
-        <Button
-          variant="contained"
-          startIcon={<Map />}
-          onClick={onMapOpen}
-          sx={{ ml: 2, minWidth: 140 }}
-        >
+        <Button variant="contained" startIcon={<Map />} onClick={onMapOpen} sx={{ ml: 2, minWidth: 140 }}>
           Set on map
         </Button>
       </Box>
@@ -105,17 +95,11 @@ export function LocationSearchInput({
                 {selectedLocation.name}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {selectedLocation.latitude.toFixed(6)},{" "}
-                {selectedLocation.longitude.toFixed(6)}
+                {selectedLocation.latitude.toFixed(6)}, {selectedLocation.longitude.toFixed(6)}
               </Typography>
             </Box>
           </Box>
-          <Chip
-            label="Selected"
-            color="primary"
-            size="small"
-            variant="outlined"
-          />
+          <Chip label="Selected" color="primary" size="small" variant="outlined" />
         </Paper>
       )}
 
@@ -133,9 +117,7 @@ export function LocationSearchInput({
                 <LocationOn sx={{ mr: 2, color: "text.secondary" }} />
                 <ListItemText
                   primary={location.name}
-                  secondary={`${location.latitude.toFixed(
-                    4
-                  )}, ${location.longitude.toFixed(4)}`}
+                  secondary={`${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
                 />
               </ListItem>
             ))}
@@ -144,18 +126,15 @@ export function LocationSearchInput({
       )}
 
       {/* No Results */}
-      {showResults &&
-        searchQuery.trim() &&
-        searchResults.length === 0 &&
-        !loading && (
-          <Paper className={styles.searchResults}>
-            <Box className={styles.noResults}>
-              <Typography variant="body2" color="text.secondary">
-                No locations found. Use "Set on map" to create a new location.
-              </Typography>
-            </Box>
-          </Paper>
-        )}
+      {showResults && searchQuery.trim() && searchResults.length === 0 && !loading && (
+        <Paper className={styles.searchResults}>
+          <Box className={styles.noResults}>
+            <Typography variant="body2" color="text.secondary">
+              No locations found. Use "Set on map" to create a new location.
+            </Typography>
+          </Box>
+        </Paper>
+      )}
     </Box>
-  );
+  )
 }

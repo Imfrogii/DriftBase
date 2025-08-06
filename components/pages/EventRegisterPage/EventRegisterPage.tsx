@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
 import {
   Container,
   Paper,
@@ -15,60 +15,48 @@ import {
   Select,
   MenuItem,
   Button,
-  Link as MuiLink,
   Alert,
   Chip,
   Divider,
-} from "@mui/material";
-import {
-  CalendarToday,
-  LocationOn,
-  EuroSymbol,
-  Person,
-  DirectionsCar,
-} from "@mui/icons-material";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { useEvent } from "@/lib/queries/events";
-import { useCars } from "@/lib/queries/cars";
-import { useCreateRegistration } from "@/lib/queries/registrations";
-import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import styles from "./EventRegisterPage.module.scss";
-import Link from "next/link";
+} from "@mui/material"
+import { CalendarToday, LocationOn, EuroSymbol, Person, DirectionsCar } from "@mui/icons-material"
+import { useAuth } from "@/lib/hooks/useAuth"
+import { useEvent } from "@/lib/queries/events"
+import { useCars } from "@/lib/queries/cars"
+import { useCreateRegistration } from "@/lib/queries/registrations"
+import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
+import styles from "./EventRegisterPage.module.scss"
 
 interface RegisterFormData {
-  car_id: string;
+  car_id: string
 }
 
 interface EventRegisterPageProps {
-  eventSlug: string;
+  eventId: string
 }
 
-export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
-  const t = useTranslations();
-  const router = useRouter();
-  const locale = useLocale();
-  const { user, loading } = useAuth();
-  const { data: event, isLoading: eventLoading } = useEvent(eventSlug);
-  const { data: cars, isLoading: carsLoading } = useCars(user?.id);
-  const createRegistrationMutation = useCreateRegistration();
+export function EventRegisterPage({ eventId }: EventRegisterPageProps) {
+  const t = useTranslations()
+  const router = useRouter()
+  const { user, loading } = useAuth()
+  const { data: event, isLoading: eventLoading } = useEvent(eventId)
+  const { data: cars, isLoading: carsLoading } = useCars(user?.id)
+  const createRegistrationMutation = useCreateRegistration()
 
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormData>();
+  } = useForm<RegisterFormData>()
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(`/${locale}/auth/signin`);
+      router.push("/auth/signin")
     }
-  }, [user, loading, router]);
+  }, [user, loading, router])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pl-PL", {
@@ -77,66 +65,56 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    });
-  };
+    })
+  }
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case "beginner":
-        return "success";
+        return "success"
       case "street":
-        return "warning";
+        return "warning"
       case "pro":
-        return "error";
+        return "error"
       default:
-        return "default";
+        return "default"
     }
-  };
+  }
 
   const onSubmit = async (data: RegisterFormData) => {
-    if (!user || !event) return;
+    if (!user || !event) return
 
     // Check if user is already registered
-    const isAlreadyRegistered = event.registrations?.some(
-      (reg) => reg.user.id === user.id
-    );
+    const isAlreadyRegistered = event.registrations?.some((reg) => reg.user.id === user.id)
     if (isAlreadyRegistered) {
-      setMessage({
-        type: "error",
-        text: "You are already registered for this event.",
-      });
-      return;
+      setMessage({ type: "error", text: "You are already registered for this event." })
+      return
     }
 
     try {
       await createRegistrationMutation.mutateAsync({
         user_id: user.id,
-        event_id: event.id,
+        event_id: eventId,
         car_id: data.car_id,
-      });
+      })
 
-      setMessage({
-        type: "success",
-        text: "Successfully registered for the event!",
-      });
+      setMessage({ type: "success", text: "Successfully registered for the event!" })
+
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        router.push("/registered-events")
+      }, 2000)
     } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Failed to register for the event. Please try again.",
-      });
+      setMessage({ type: "error", text: "Failed to register for the event. Please try again." })
     }
-  };
+  }
 
   if (loading || eventLoading || carsLoading) {
-    return <div>{t("common.loading")}</div>;
+    return <div>{t("common.loading")}</div>
   }
 
   if (!user) {
-    return (
-      <Container maxWidth="md" className={styles.container}>
-        <Alert severity="error">{t("auth.not_authenticated")}</Alert>
-      </Container>
-    );
+    return null
   }
 
   if (!event) {
@@ -144,27 +122,24 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
       <Container maxWidth="md">
         <Alert severity="error">Event not found.</Alert>
       </Container>
-    );
+    )
   }
 
   // Check if user is already registered
-  const isAlreadyRegistered = event?.registrations?.some(
-    (reg) => reg.user.id === user?.id
-  );
+  const isAlreadyRegistered = event.registrations?.some((reg) => reg.user.id === user.id)
 
   // Check if user has cars
   if (!cars || cars.length === 0) {
     return (
       <Container maxWidth="md" className={styles.container}>
         <Alert severity="warning">
-          You need to add at least one car to your profile before registering
-          for events.
-          <Button href={`/${locale}/profile`} sx={{ ml: 2 }}>
+          You need to add at least one car to your profile before registering for events.
+          <Button href="/profile" sx={{ ml: 2 }}>
             Go to Profile
           </Button>
         </Alert>
       </Container>
-    );
+    )
   }
 
   return (
@@ -188,18 +163,11 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
                 <Typography variant="h5" component="h2">
                   {event.title}
                 </Typography>
-                <Chip
-                  label={t(`events.levels.${event.level}`)}
-                  color={getLevelColor(event.level)}
-                />
+                <Chip label={t(`events.levels.${event.level}`)} color={getLevelColor(event.level)} />
               </Box>
 
               {event.description && (
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
-                >
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                   {event.description}
                 </Typography>
               )}
@@ -215,10 +183,7 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
                 <Grid item xs={12} sm={6}>
                   <Box className={styles.detail}>
                     <LocationOn />
-                    <Typography>
-                      {event.location_name ||
-                        `${event.location_lat}, ${event.location_lng}`}
-                    </Typography>
+                    <Typography>{event.location_name || `${event.location_lat}, ${event.location_lng}`}</Typography>
                   </Box>
                 </Grid>
 
@@ -232,7 +197,7 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
                 <Grid item xs={12} sm={6}>
                   <Box className={styles.detail}>
                     <Person />
-                    <Typography>{event?.created_by}</Typography>
+                    <Typography>{event.creator.display_name || event.creator.email}</Typography>
                   </Box>
                 </Grid>
               </Grid>
@@ -248,20 +213,16 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
                   {event.registrations.map((registration) => (
                     <Box key={registration.id} className={styles.participant}>
                       <Typography variant="body2">
-                        {registration.user.display_name ||
-                          registration.user.email}
+                        {registration.user.display_name || registration.user.email}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {registration.car.make} {registration.car.model} (
-                        {registration.car.year})
+                        {registration.car.make} {registration.car.model} ({registration.car.year})
                       </Typography>
                     </Box>
                   ))}
                 </Box>
               ) : (
-                <Typography color="text.secondary">
-                  No participants yet.
-                </Typography>
+                <Typography color="text.secondary">No participants yet.</Typography>
               )}
             </CardContent>
           </Card>
@@ -277,9 +238,9 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
             {isAlreadyRegistered ? (
               <Alert severity="info">
                 You are already registered for this event.
-                <Link href={`/${locale}/registered-events`}>
+                <Button href="/registered-events" sx={{ ml: 2 }}>
                   View My Registrations
-                </Link>
+                </Button>
               </Alert>
             ) : (
               <Box component="form" onSubmit={handleSubmit(onSubmit)}>
@@ -299,10 +260,7 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
                               {car.make} {car.model} ({car.year})
                             </Typography>
                             {car.power && (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
+                              <Typography variant="caption" color="text.secondary">
                                 {car.power} HP
                               </Typography>
                             )}
@@ -327,9 +285,7 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
                   disabled={createRegistrationMutation.isPending}
                   sx={{ mt: 3 }}
                 >
-                  {createRegistrationMutation.isPending
-                    ? "Registering..."
-                    : "Register for Event"}
+                  {createRegistrationMutation.isPending ? "Registering..." : "Register for Event"}
                 </Button>
               </Box>
             )}
@@ -337,5 +293,5 @@ export function EventRegisterPage({ eventSlug }: EventRegisterPageProps) {
         </Grid>
       </Grid>
     </Container>
-  );
+  )
 }

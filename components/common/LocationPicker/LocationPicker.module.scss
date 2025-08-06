@@ -1,7 +1,6 @@
 .locationPicker {
   width: 100%;
   position: relative;
-  height: 500px;
 }
 
 .controls {
@@ -23,7 +22,7 @@
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
-
+  
   .leaflet-container {
     height: 100%;
     width: 100%;
@@ -39,12 +38,23 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
+// Custom marker styles
+:global(.location-marker) {
+  opacity: 0.5;
+  filter: saturate(0.7);
+}
+
+:global(.ghost-marker) {
+  opacity: 0.3;
+  filter: grayscale(0.5);
+}
+
 @media (max-width: 768px) {
   .controls {
     flex-direction: column;
     align-items: stretch;
   }
-
+  
   .searchButton {
     top: 60px;
     font-size: 0.8rem !important;

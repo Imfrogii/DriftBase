@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import {
   Container,
   Paper,
@@ -19,154 +19,139 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-} from "@mui/material";
-import { Edit, Delete, Add } from "@mui/icons-material";
-import { useAuth } from "@/lib/hooks/useAuth";
+} from '@mui/material'
+import { Edit, Delete, Add } from '@mui/icons-material'
+import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useCars,
   useCreateCar,
   useUpdateCar,
   useDeleteCar,
-} from "@/lib/queries/cars";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import type { Car } from "@/lib/supabase/types";
-import styles from "./ProfilePage.module.scss";
+} from '@/lib/queries/cars'
+import { useTranslations } from 'next-intl'
+import type { Car } from '@/lib/supabase/types'
+import styles from './ProfilePage.module.scss'
 
 interface ProfileFormData {
-  display_name: string;
-  email: string;
+  display_name: string
+  email: string
 }
 
 interface CarFormData {
-  make: string;
-  model: string;
-  year: number;
-  power: number | null;
-  description: string;
+  make: string
+  model: string
+  year: number
+  power: number | null
+  description: string
 }
 
 export function ProfilePage() {
-  const t = useTranslations();
-  const router = useRouter();
-  const { user, dbUser, loading } = useAuth();
-  const { data: cars, isLoading: carsLoading } = useCars(user?.id);
-  const createCarMutation = useCreateCar();
-  const updateCarMutation = useUpdateCar();
-  const deleteCarMutation = useDeleteCar();
+  const t = useTranslations()
+  const { user, dbUser, loading } = useAuth()
+  const { data: cars, isLoading: carsLoading } = useCars()
+  const createCarMutation = useCreateCar()
+  const updateCarMutation = useUpdateCar()
+  const deleteCarMutation = useDeleteCar()
 
-  const [carDialogOpen, setCarDialogOpen] = useState(false);
-  const [editingCar, setEditingCar] = useState<Car | null>(null);
+  const [carDialogOpen, setCarDialogOpen] = useState(false)
+  const [editingCar, setEditingCar] = useState<Car | null>(null)
   const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
 
   const profileForm = useForm<ProfileFormData>({
     defaultValues: {
-      display_name: dbUser?.display_name || "",
-      email: dbUser?.email || "",
+      display_name: dbUser?.display_name || '',
+      email: dbUser?.email || '',
     },
-  });
+  })
 
   const carForm = useForm<CarFormData>({
     defaultValues: {
-      make: "",
-      model: "",
+      make: '',
+      model: '',
       year: new Date().getFullYear(),
       power: null,
-      description: "",
+      description: '',
     },
-  });
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth/signin");
-    }
-  }, [user, loading, router]);
+  })
 
   useEffect(() => {
     if (dbUser) {
       profileForm.reset({
-        display_name: dbUser.display_name || "",
+        display_name: dbUser.display_name || '',
         email: dbUser.email,
-      });
+      })
     }
-  }, [dbUser, profileForm]);
+  }, [dbUser, profileForm])
 
   const onProfileSubmit = async (data: ProfileFormData) => {
     // Profile update would be implemented here
-    setMessage({ type: "success", text: "Profile updated successfully!" });
-  };
+    setMessage({ type: 'success', text: 'Profile updated successfully!' })
+  }
 
   const onCarSubmit = async (data: CarFormData) => {
-    if (!user) return;
+    if (!user) return
 
     try {
       if (editingCar) {
         await updateCarMutation.mutateAsync({
           id: editingCar.id,
           ...data,
-        });
-        setMessage({ type: "success", text: "Car updated successfully!" });
+        })
+        setMessage({ type: 'success', text: 'Car updated successfully!' })
       } else {
-        await createCarMutation.mutateAsync({
-          user_id: user.id,
-          ...data,
-        });
-        setMessage({ type: "success", text: "Car added successfully!" });
+        await createCarMutation.mutateAsync(data)
+        setMessage({ type: 'success', text: 'Car added successfully!' })
       }
-      handleCloseCarDialog();
+      handleCloseCarDialog()
     } catch (error) {
       setMessage({
-        type: "error",
-        text: "Failed to save car. Please try again.",
-      });
+        type: 'error',
+        text: 'Failed to save car. Please try again.',
+      })
     }
-  };
+  }
 
   const handleEditCar = (car: Car) => {
-    setEditingCar(car);
+    setEditingCar(car)
     carForm.reset({
       make: car.make,
       model: car.model,
       year: car.year,
       power: car.power,
-      description: car.description || "",
-    });
-    setCarDialogOpen(true);
-  };
-
-  const handleDeleteCar = async (carId: string) => {
-    if (window.confirm("Are you sure you want to delete this car?")) {
-      try {
-        await deleteCarMutation.mutateAsync(carId);
-        setMessage({ type: "success", text: "Car deleted successfully!" });
-      } catch (error) {
-        setMessage({ type: "error", text: "Failed to delete car." });
-      }
-    }
-  };
-
-  const handleCloseCarDialog = () => {
-    setCarDialogOpen(false);
-    setEditingCar(null);
-    carForm.reset({
-      make: "",
-      model: "",
-      year: new Date().getFullYear(),
-      power: null,
-      description: "",
-    });
-  };
-
-  if (loading) {
-    return <div>{t("common.loading")}</div>;
+      description: car.description || '',
+    })
+    setCarDialogOpen(true)
   }
 
-  //   if (!user || !dbUser) {
-  //     return null;
-  //   }
+  const handleDeleteCar = async (carId: string) => {
+    if (window.confirm('Are you sure you want to delete this car?')) {
+      try {
+        await deleteCarMutation.mutateAsync(carId)
+        setMessage({ type: 'success', text: 'Car deleted successfully!' })
+      } catch (error) {
+        setMessage({ type: 'error', text: 'Failed to delete car.' })
+      }
+    }
+  }
+
+  const handleCloseCarDialog = () => {
+    setCarDialogOpen(false)
+    setEditingCar(null)
+    carForm.reset({
+      make: '',
+      model: '',
+      year: new Date().getFullYear(),
+      power: null,
+      description: '',
+    })
+  }
+
+  if (loading) {
+    return <div>{t('common.loading')}</div>
+  }
 
   return (
     <Container maxWidth="lg" className={styles.container}>
@@ -194,13 +179,13 @@ export function ProfilePage() {
               <TextField
                 fullWidth
                 label="Display Name"
-                {...profileForm.register("display_name")}
+                {...profileForm.register('display_name')}
                 margin="normal"
               />
               <TextField
                 fullWidth
                 label="Email"
-                {...profileForm.register("email")}
+                {...profileForm.register('email')}
                 disabled
                 margin="normal"
               />
@@ -236,7 +221,7 @@ export function ProfilePage() {
             </Box>
 
             {carsLoading ? (
-              <Typography>{t("common.loading")}</Typography>
+              <Typography>{t('common.loading')}</Typography>
             ) : cars && cars.length > 0 ? (
               <Box className={styles.carsList}>
                 {cars.map((car) => (
@@ -286,13 +271,13 @@ export function ProfilePage() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>{editingCar ? "Edit Car" : "Add New Car"}</DialogTitle>
+        <DialogTitle>{editingCar ? 'Edit Car' : 'Add New Car'}</DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={carForm.handleSubmit(onCarSubmit)}>
             <TextField
               fullWidth
               label="Make"
-              {...carForm.register("make", { required: "Make is required" })}
+              {...carForm.register('make', { required: 'Make is required' })}
               error={!!carForm.formState.errors.make}
               helperText={carForm.formState.errors.make?.message}
               margin="normal"
@@ -300,7 +285,7 @@ export function ProfilePage() {
             <TextField
               fullWidth
               label="Model"
-              {...carForm.register("model", { required: "Model is required" })}
+              {...carForm.register('model', { required: 'Model is required' })}
               error={!!carForm.formState.errors.model}
               helperText={carForm.formState.errors.model?.message}
               margin="normal"
@@ -309,13 +294,13 @@ export function ProfilePage() {
               fullWidth
               label="Year"
               type="number"
-              {...carForm.register("year", {
-                required: "Year is required",
+              {...carForm.register('year', {
+                required: 'Year is required',
                 valueAsNumber: true,
-                min: { value: 1900, message: "Year must be after 1900" },
+                min: { value: 1900, message: 'Year must be after 1900' },
                 max: {
                   value: new Date().getFullYear() + 1,
-                  message: "Year cannot be in the future",
+                  message: 'Year cannot be in the future',
                 },
               })}
               error={!!carForm.formState.errors.year}
@@ -326,7 +311,7 @@ export function ProfilePage() {
               fullWidth
               label="Power (HP)"
               type="number"
-              {...carForm.register("power", { valueAsNumber: true })}
+              {...carForm.register('power', { valueAsNumber: true })}
               margin="normal"
             />
             <TextField
@@ -334,7 +319,7 @@ export function ProfilePage() {
               label="Description"
               multiline
               rows={3}
-              {...carForm.register("description")}
+              {...carForm.register('description')}
               margin="normal"
             />
           </Box>
@@ -346,10 +331,10 @@ export function ProfilePage() {
             variant="contained"
             disabled={carForm.formState.isSubmitting}
           >
-            {editingCar ? "Update" : "Add"} Car
+            {editingCar ? 'Update' : 'Add'} Car
           </Button>
         </DialogActions>
       </Dialog>
     </Container>
-  );
+  )
 }

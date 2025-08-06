@@ -1,10 +1,9 @@
-"use client";
+'use client'
 
-import type React from "react";
-
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import type React from 'react'
+import { useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   AppBar,
   Toolbar,
@@ -21,67 +20,66 @@ import {
   List,
   ListItem,
   ListItemText,
-} from "@mui/material";
-import { Menu as MenuIcon, AccountCircle, Language } from "@mui/icons-material";
-import styles from "./Navbar.module.scss";
-import { useAuth } from "@/lib/hooks/useAuth";
+} from '@mui/material'
+import { Menu as MenuIcon, AccountCircle, Language } from '@mui/icons-material'
+import styles from './Navbar.module.scss'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 export function Navbar({ locale }: { locale: string }) {
-  const t = useTranslations();
-  const router = useRouter();
-  const pathname = usePathname();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { dbUser, signOut } = useAuth();
+  const t = useTranslations()
+  const router = useRouter()
+  const pathname = usePathname()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const { dbUser, signOut } = useAuth()
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [langAnchorEl, setLangAnchorEl] = useState<null | HTMLElement>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [langAnchorEl, setLangAnchorEl] = useState<null | HTMLElement>(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+    setAnchorEl(event.currentTarget)
+  }
 
   const handleClose = () => {
-    setAnchorEl(null);
-  };
+    setAnchorEl(null)
+  }
 
   const handleLangMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setLangAnchorEl(event.currentTarget);
-  };
+    setLangAnchorEl(event.currentTarget)
+  }
 
   const handleLangClose = () => {
-    setLangAnchorEl(null);
-  };
+    setLangAnchorEl(null)
+  }
 
   const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+    setMobileOpen(!mobileOpen)
+  }
 
   const handleNavigation = (path: string) => {
-    router.push(path);
-    setMobileOpen(false);
-  };
+    router.push(path)
+    setMobileOpen(false)
+  }
 
-  const changeLanguage = (locale: string) => {
-    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${locale}`);
-    router.push(newPath);
-    handleLangClose();
-  };
+  const changeLanguage = (newLocale: string) => {
+    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${newLocale}`)
+    router.push(newPath)
+    handleLangClose()
+  }
 
   const navItems = [
-    { label: t("nav.home"), path: "/" },
-    { label: t("nav.events"), path: "/events" },
+    { label: t('nav.home'), path: `/${locale}` },
+    { label: t('nav.events'), path: `/${locale}/events` },
     ...(dbUser
       ? [
-          { label: t("nav.create"), path: `/${locale}/events/create` },
-          { label: t("nav.profile"), path: `/${locale}/profile` },
+          { label: t('nav.create'), path: `/${locale}/events/create` },
         ]
       : []),
-  ];
+  ]
 
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
+    <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Typography variant="h6" sx={{ my: 2 }}>
         DriftBase
       </Typography>
@@ -96,18 +94,18 @@ export function Navbar({ locale }: { locale: string }) {
             <ListItem
               onClick={() => handleNavigation(`/${locale}/auth/signin`)}
             >
-              <ListItemText primary={t("nav.signin")} />
+              <ListItemText primary={t('nav.signin')} />
             </ListItem>
             <ListItem
               onClick={() => handleNavigation(`/${locale}/auth/signup`)}
             >
-              <ListItemText primary={t("nav.signup")} />
+              <ListItemText primary={t('nav.signup')} />
             </ListItem>
           </>
         )}
       </List>
     </Box>
-  );
+  )
 
   return (
     <>
@@ -129,14 +127,14 @@ export function Navbar({ locale }: { locale: string }) {
             <Typography
               variant="h6"
               component="div"
-              sx={{ flexGrow: isMobile ? 1 : 0, mr: 4, cursor: "pointer" }}
-              onClick={() => handleNavigation("/")}
+              sx={{ flexGrow: isMobile ? 1 : 0, mr: 4, cursor: 'pointer' }}
+              onClick={() => handleNavigation(`/${locale}`)}
             >
               DriftBase
             </Typography>
 
             {!isMobile && (
-              <Box sx={{ flexGrow: 1, display: "flex", gap: 2 }}>
+              <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>
                 {navItems.map((item) => (
                   <Button
                     key={item.path}
@@ -149,7 +147,7 @@ export function Navbar({ locale }: { locale: string }) {
               </Box>
             )}
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconButton
                 size="large"
                 aria-label="change language"
@@ -177,32 +175,48 @@ export function Navbar({ locale }: { locale: string }) {
                     id="menu-appbar"
                     anchorEl={anchorEl}
                     anchorOrigin={{
-                      vertical: "top",
-                      horizontal: "right",
+                      vertical: 'top',
+                      horizontal: 'right',
                     }}
                     keepMounted
                     transformOrigin={{
-                      vertical: "top",
-                      horizontal: "right",
+                      vertical: 'top',
+                      horizontal: 'right',
                     }}
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
                   >
                     <MenuItem
                       onClick={() => {
-                        handleClose();
-                        handleNavigation(`/${locale}/profile`);
+                        handleClose()
+                        handleNavigation(`/${locale}/profile`)
                       }}
                     >
-                      {t("nav.profile")}
+                      {t('nav.profile')}
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        signOut();
-                        handleClose();
+                        handleClose()
+                        handleNavigation(`/${locale}/my-events`)
                       }}
                     >
-                      {t("nav.signout")}
+                      Organizer
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleClose()
+                        handleNavigation(`/${locale}/registrations`)
+                      }}
+                    >
+                      Registrations
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        signOut()
+                        handleClose()
+                      }}
+                    >
+                      {t('nav.signout')}
                     </MenuItem>
                   </Menu>
                 </>
@@ -213,13 +227,13 @@ export function Navbar({ locale }: { locale: string }) {
                       color="inherit"
                       onClick={() => handleNavigation(`/${locale}/auth/signin`)}
                     >
-                      {t("nav.signin")}
+                      {t('nav.signin')}
                     </Button>
                     <Button
                       color="inherit"
                       onClick={() => handleNavigation(`/${locale}/auth/signup`)}
                     >
-                      {t("nav.signup")}
+                      {t('nav.signup')}
                     </Button>
                   </>
                 )
@@ -232,9 +246,9 @@ export function Navbar({ locale }: { locale: string }) {
               open={Boolean(langAnchorEl)}
               onClose={handleLangClose}
             >
-              <MenuItem onClick={() => changeLanguage("pl")}>Polski</MenuItem>
-              <MenuItem onClick={() => changeLanguage("en")}>English</MenuItem>
-              <MenuItem onClick={() => changeLanguage("ru")}>Русский</MenuItem>
+              <MenuItem onClick={() => changeLanguage('pl')}>Polski</MenuItem>
+              <MenuItem onClick={() => changeLanguage('en')}>English</MenuItem>
+              <MenuItem onClick={() => changeLanguage('ru')}>Русский</MenuItem>
             </Menu>
           </Toolbar>
         </Container>
@@ -248,12 +262,12 @@ export function Navbar({ locale }: { locale: string }) {
           keepMounted: true,
         }}
         sx={{
-          display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": { boxSizing: "border-box", width: 240 },
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
         }}
       >
         {drawer}
       </Drawer>
     </>
-  );
+  )
 }

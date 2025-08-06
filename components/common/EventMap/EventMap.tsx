@@ -1,64 +1,57 @@
-"use client";
+"use client"
 
-import { useState, useCallback } from "react";
-import { Box, Typography, Chip, Paper } from "@mui/material";
-import Map, { Marker, NavigationControl, Popup } from "react-map-gl/maplibre";
-import type { EventWithCreator } from "@/lib/supabase/types";
-import { useTranslations } from "next-intl";
-import styles from "./EventMap.module.scss";
+import { useState, useCallback } from "react"
+import { Box, Typography, Chip, Paper } from "@mui/material"
+import Map, { Marker, NavigationControl, Popup } from "react-map-gl/maplibre"
+import type { EventWithCreator } from "@/lib/supabase/types"
+import { useTranslations } from "next-intl"
+import styles from "./EventMap.module.scss"
 
 interface EventMapProps {
-  events: EventWithCreator[];
-  onEventClick?: (event: EventWithCreator) => void;
-  center?: [number, number];
-  zoom?: number;
+  events: EventWithCreator[]
+  onEventClick?: (event: EventWithCreator) => void
+  center?: [number, number]
+  zoom?: number
 }
 
 const INITIAL_VIEW_STATE = {
   longitude: 21.0122,
   latitude: 52.2297,
   zoom: 10,
-};
+}
 
-export function EventMap({
-  events,
-  onEventClick,
-  center = [52.2297, 21.0122],
-  zoom = 10,
-}: EventMapProps) {
-  const t = useTranslations("events");
-  const [selectedEvent, setSelectedEvent] = useState<EventWithCreator | null>(
-    null
-  );
+export function EventMap({ events, onEventClick, center = [52.2297, 21.0122], zoom = 10 }: EventMapProps) {
+  const t = useTranslations("events")
+  const [selectedEvent, setSelectedEvent] = useState<EventWithCreator | null>(null)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pl-PL", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    });
-  };
+    })
+  }
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case "beginner":
-        return "success";
+        return "success"
       case "street":
-        return "warning";
+        return "warning"
       case "pro":
-        return "error";
+        return "error"
       default:
-        return "default";
+        return "default"
     }
-  };
+  }
 
   const handleMarkerClick = useCallback(
     (event: EventWithCreator) => {
-      setSelectedEvent(event);
-      onEventClick?.(event);
+      setSelectedEvent(event)
+      onEventClick?.(event)
     },
-    [onEventClick]
-  );
+    [onEventClick],
+  )
 
   return (
     <Box className={styles.mapContainer}>
@@ -128,5 +121,5 @@ export function EventMap({
         )}
       </Map>
     </Box>
-  );
+  )
 }

@@ -2,54 +2,20 @@
   padding: 2rem 0;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
 .eventCard {
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
 }
 
-.header {
-  margin-bottom: 12px;
-}
-
-.title {
-  font-weight: 600 !important;
-  margin-bottom: 8px;
-}
-
-.chips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.description {
-  margin-bottom: 16px !important;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.detail {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(0, 0, 0, 0.6);
-
-  svg {
-    font-size: 16px;
-  }
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
 }

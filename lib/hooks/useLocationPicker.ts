@@ -1,110 +1,104 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import { Location } from "../types/location";
+import { useState, useEffect, useCallback } from "react"
+import type L from "leaflet"
+
+interface MapBounds {
+  center: { lat: number; lng: number }
+  bounds: L.LatLngBounds
+  zoom: number
+}
 
 interface UseLocationPickerProps {
   initialLocation?: {
-    name?: string;
-    latitude: number;
-    longitude: number;
-  };
-  onLocationSelect: (location: Location) => void;
+    name?: string
+    latitude: number
+    longitude: number
+  }
+  onLocationSelect: (location: { name: string; latitude: number; longitude: number }) => void
 }
 
-export function useLocationPicker({
-  initialLocation,
-  onLocationSelect,
-}: UseLocationPickerProps) {
-  const [mapCenter, setMapCenter] = useState<[number, number]>([
-    52.2297, 21.0122,
-  ]);
-  const [mapZoom, setMapZoom] = useState(10);
-  const [selectedPosition, setSelectedPosition] = useState<
-    [number, number] | null
-  >(null);
-  const [selectedLocationName, setSelectedLocationName] = useState("");
-  const [isInitialized, setIsInitialized] = useState(false);
+export function useLocationPicker({ initialLocation, onLocationSelect }: UseLocationPickerProps) {
+  const [mapCenter, setMapCenter] = useState<[number, number]>([52.2297, 21.0122])
+  const [mapZoom, setMapZoom] = useState(10)
+  const [selectedPosition, setSelectedPosition] = useState<[number, number] | null>(null)
+  const [selectedLocationName, setSelectedLocationName] = useState("")
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Initialize map center only once
   useEffect(() => {
-    if (isInitialized) return;
+    if (isInitialized) return
 
     if (initialLocation) {
-      setMapCenter([initialLocation.latitude, initialLocation.longitude]);
-      setSelectedPosition([
-        initialLocation.latitude,
-        initialLocation.longitude,
-      ]);
-      setSelectedLocationName(initialLocation.name || "");
-      setMapZoom(15);
-      setIsInitialized(true);
+      setMapCenter([initialLocation.latitude, initialLocation.longitude])
+      setSelectedPosition([initialLocation.latitude, initialLocation.longitude])
+      setSelectedLocationName(initialLocation.name || "")
+      setMapZoom(15)
+      setIsInitialized(true)
     } else {
       // Try to get user's current location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { latitude, longitude } = position.coords;
-            setMapCenter([latitude, longitude]);
-            setMapZoom(12);
-            setIsInitialized(true);
+            const { latitude, longitude } = position.coords
+            setMapCenter([latitude, longitude])
+            setMapZoom(12)
+            setIsInitialized(true)
           },
           () => {
-            setIsInitialized(true);
-          }
-        );
+            setIsInitialized(true)
+          },
+        )
       } else {
-        setIsInitialized(true);
+        setIsInitialized(true)
       }
     }
-  }, [initialLocation, isInitialized]);
+  }, [initialLocation, isInitialized])
 
   const selectLocation = useCallback(
-    (location: Location) => {
-      setMapCenter([location.latitude, location.longitude]);
-      setSelectedPosition([location.latitude, location.longitude]);
-      setSelectedLocationName(location.name);
-      onLocationSelect(location);
+    (location: { name: string; latitude: number; longitude: number }) => {
+      setMapCenter([location.latitude, location.longitude])
+      setSelectedPosition([location.latitude, location.longitude])
+      setSelectedLocationName(location.name)
+      onLocationSelect(location)
     },
-    [onLocationSelect]
-  );
+    [onLocationSelect],
+  )
 
   const updateSelectedPosition = useCallback(
     (position: [number, number], name?: string) => {
-      setSelectedPosition(position);
-      const locationName = name || selectedLocationName || "Custom Location";
-      setSelectedLocationName(locationName);
+      setSelectedPosition(position)
+      const locationName = name || selectedLocationName || "Custom Location"
+      setSelectedLocationName(locationName)
       onLocationSelect({
         name: locationName,
         latitude: position[0],
         longitude: position[1],
-      });
+      })
     },
-    [selectedLocationName, onLocationSelect]
-  );
+    [selectedLocationName, onLocationSelect],
+  )
 
   const getCurrentLocation = useCallback(() => {
-    return new Promise<{ latitude: number; longitude: number }>(
-      (resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error("Geolocation is not supported by this browser"));
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setMapCenter([latitude, longitude]);
-            setMapZoom(15);
-            resolve({ latitude, longitude });
-          },
-          () => {
-            reject(new Error("Failed to get current location"));
-          }
-        );
+    return new Promise<{ latitude: number; longitude: number }>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by this browser"))
+        return
       }
-    );
-  }, []);
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          setMapCenter([latitude, longitude])
+          setMapZoom(15)
+          resolve({ latitude, longitude })
+        },
+        () => {
+          reject(new Error("Failed to get current location"))
+        },
+      )
+    })
+  }, [])
 
   return {
     mapCenter,
@@ -117,5 +111,5 @@ export function useLocationPicker({
     selectLocation,
     updateSelectedPosition,
     getCurrentLocation,
-  };
+  }
 }

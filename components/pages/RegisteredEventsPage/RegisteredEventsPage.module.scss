@@ -2,59 +2,20 @@
   padding: 2rem 0;
 }
 
-.filtersContainer {
-  padding: 20px;
-  margin-bottom: 24px;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-}
-
-.eventCard {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-}
-
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
-.title {
-  font-weight: 600 !important;
-  flex: 1;
-  margin-right: 12px;
-}
-
-.description {
-  margin-bottom: 16px !important;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.details {
+.registrationCard {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
-.detail {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(0, 0, 0, 0.6);
-
-  svg {
-    font-size: 16px;
-  }
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
 }

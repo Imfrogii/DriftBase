@@ -1,99 +1,50 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import type { FullRegistration, Registration } from "@/lib/supabase/types";
-import { TFilters } from "../types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-export function useRegistrations(filters: TFilters, userId?: string) {
+export function useRegistrations(filters?: {
+  level?: string
+  priceMax?: number
+}) {
   return useQuery({
-    queryKey: ["registrations", filters, userId],
+    queryKey: ['registrations', filters],
     queryFn: async () => {
-      // const { data, error } = await supabase
-      //   .from("registrations")
-      //   .select(
-      //     `
-      //     *,
-      //     event:events(*),
-      //     car:cars(*)
-      //   `
-      //   )
-      //   .eq("user_id", userId!)
-      // .order("created_at", { ascending: false });
+      const params = new URLSearchParams()
+      
+      if (filters?.level) params.append('level', filters.level)
+      if (filters?.priceMax !== undefined) params.append('priceMax', filters.priceMax.toString())
 
-      const today = new Date(); // YYYY-MM-DD
-
-      const { data, error } = await supabase
-        .from("registrations")
-        .select(
-          `
-            *,
-            event:events(
-              id, 
-              title,
-              slug,
-              level,
-              price,
-              event_date,
-              location:locations(id, name, latitude, longitude)
-            ),
-            car:cars(id, make, model, year)
-          `
-        )
-        .eq("user_id", userId)
-        .is("deleted_at", null)
-        .gte("event.event_date", today ?? 0)
-        .eq("event.deleted_at", null)
-        .eq("event.level", filters.level)
-        .lte("event.price", filters.priceMax)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as FullRegistration[];
+      const response = await fetch(`/api/registrations?${params}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch registrations')
+      }
+      
+      const data = await response.json()
+      return data.registrations
     },
-    enabled: !!userId,
-  });
+  })
 }
 
 export function useCreateRegistration() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (
-      registrationData: Omit<Registration, "id" | "created_at" | "deleted_at">
-    ) => {
-      const { data, error } = await supabase
-        .from("registrations")
-        .insert(registrationData)
-        .select()
-        .single();
+    mutationFn: async (registrationData: { event_id: string; car_id: string }) => {
+      const response = await fetch('/api/registrations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      })
 
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data: Registration, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["registrations", variables.user_id],
-      });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event", data.event_id] });
-    },
-  });
-}
+      if (!response.ok) {
+        throw new Error('Failed to create registration')
+      }
 
-export function useDeleteRegistration() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("registrations")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      return response.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["registrations"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ['registrations'] })
+      queryClient.invalidateQueries({ queryKey: ['events'] })
     },
-  });
+  })
 }

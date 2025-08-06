@@ -8,7 +8,7 @@
 
 .eventMarker {
   cursor: pointer;
-
+  
   .markerDot {
     width: 16px;
     height: 16px;
@@ -16,19 +16,19 @@
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease;
-
+    
     &:hover {
       transform: scale(1.2);
     }
-
+    
     &.beginner {
       background-color: #4caf50;
     }
-
+    
     &.street {
       background-color: #ff9800;
     }
-
+    
     &.pro {
       background-color: #f44336;
     }

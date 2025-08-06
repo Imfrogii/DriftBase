@@ -1,82 +1,100 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import type { Car } from "@/lib/supabase/types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-export function useCars(userId?: string) {
+export function useCars() {
   return useQuery({
-    queryKey: ["cars", userId],
+    queryKey: ['cars'],
     queryFn: async () => {
-      let query = supabase
-        .from("cars")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (userId) {
-        query = query.eq("user_id", userId);
+      const response = await fetch('/api/cars')
+      if (!response.ok) {
+        throw new Error('Failed to fetch cars')
       }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Car[];
+      
+      const data = await response.json()
+      return data.cars
     },
-    enabled: !!userId,
-  });
+  })
 }
 
 export function useCreateCar() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (
-      carData: Omit<Car, "id" | "created_at" | "updated_at">
-    ) => {
-      const { data, error } = await supabase
-        .from("cars")
-        .insert(carData)
-        .select()
-        .single();
+    mutationFn: async (carData: {
+      make: string
+      model: string
+      year: number
+      power?: number
+      description?: string
+    }) => {
+      const response = await fetch('/api/cars', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(carData),
+      })
 
-      if (error) throw error;
-      return data;
+      if (!response.ok) {
+        throw new Error('Failed to create car')
+      }
+
+      return response.json()
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["cars", variables.user_id] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cars'] })
     },
-  });
+  })
 }
 
 export function useUpdateCar() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, ...carData }: Partial<Car> & { id: string }) => {
-      const { data, error } = await supabase
-        .from("cars")
-        .update(carData)
-        .eq("id", id)
-        .select()
-        .single();
+    mutationFn: async ({ id, ...carData }: {
+      id: string
+      make: string
+      model: string
+      year: number
+      power?: number
+      description?: string
+    }) => {
+      const response = await fetch(`/api/cars/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(carData),
+      })
 
-      if (error) throw error;
-      return data;
+      if (!response.ok) {
+        throw new Error('Failed to update car')
+      }
+
+      return response.json()
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["cars", data.user_id] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cars'] })
     },
-  });
+  })
 }
 
 export function useDeleteCar() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("cars").delete().eq("id", id);
+      const response = await fetch(`/api/cars/${id}`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to delete car')
+      }
+
+      return response.json()
     },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["cars"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cars'] })
     },
-  });
+  })
 }

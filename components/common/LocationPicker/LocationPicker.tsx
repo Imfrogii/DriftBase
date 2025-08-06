@@ -1,44 +1,40 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
-import { MyLocation } from "@mui/icons-material";
-import L from "leaflet";
-import { useDebounce } from "@/lib/hooks/useDebounce";
-import { useLocationPicker } from "@/lib/hooks/useLocationPicker";
-import { useLocationSearch } from "@/lib/hooks/useLocationSearch";
-import { useMapInteraction } from "@/lib/hooks/useMapInteraction";
-import { LocationSearchInput } from "./LocationSearchInput";
-import { MapModal } from "./MapModal";
-import type { Location } from "@/lib/types/location";
-import styles from "./LocationPicker.module.scss";
-import { CreateLocationDialog } from "./CreateLocationDialog";
+import { useState, useEffect, useCallback } from "react"
+import { Box, Button, Paper, Typography, Alert, CircularProgress } from "@mui/material"
+import { MyLocation } from "@mui/icons-material"
+import L from "leaflet"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useLocationPicker } from "@/lib/hooks/useLocationPicker"
+import { useLocationSearch } from "@/lib/hooks/useLocationSearch"
+import { useMapInteraction } from "@/lib/hooks/useMapInteraction"
+import { CreateLocationDialog } from "./CreateLocationDialog"
+import { LocationSearchInput } from "./LocationSearchInput"
+import { MapModal } from "./MapModal"
+import type { Location } from "@/lib/types/location"
+import styles from "./LocationPicker.module.scss"
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
+  iconUrl: "/leaflet/marker-icon.png",
+  shadowUrl: "/leaflet/marker-shadow.png",
+})
 
 interface LocationPickerProps {
-  initialLocation?: Location;
-  onLocationSelect: (location: Location) => void;
+  initialLocation?: Location
+  onLocationSelect: (location: Location) => void
 }
 
-export function LocationPicker({
-  initialLocation,
-  onLocationSelect,
-}: LocationPickerProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newLocationName, setNewLocationName] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
-    initialLocation || null
-  );
-  const [mapModalOpen, setMapModalOpen] = useState(false);
+export function LocationPicker({ initialLocation, onLocationSelect }: LocationPickerProps) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [newLocationName, setNewLocationName] = useState("")
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(initialLocation || null)
+  const [mapModalOpen, setMapModalOpen] = useState(false)
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   // Custom hooks
   const {
@@ -50,7 +46,7 @@ export function LocationPicker({
     selectLocation,
     updateSelectedPosition,
     getCurrentLocation,
-  } = useLocationPicker({ initialLocation, onLocationSelect });
+  } = useLocationPicker({ initialLocation, onLocationSelect })
 
   const {
     searchResults,
@@ -63,7 +59,7 @@ export function LocationPicker({
     clearSearchResults,
     clearError,
     cleanup,
-  } = useLocationSearch();
+  } = useLocationSearch()
 
   const {
     currentBounds,
@@ -73,27 +69,27 @@ export function LocationPicker({
     handleMouseMove,
     handleMouseOut,
     markAsQueried,
-  } = useMapInteraction();
+  } = useMapInteraction()
 
   // Handle search with debouncing
   useEffect(() => {
-    searchLocations(debouncedSearchQuery);
-  }, [debouncedSearchQuery, searchLocations]);
+    searchLocations(debouncedSearchQuery)
+  }, [debouncedSearchQuery, searchLocations])
 
   // Initial load of locations
   useEffect(() => {
-    if (!isInitialized || !currentBounds) return;
+    if (!isInitialized || !currentBounds) return
 
     if (currentBounds.zoom >= 5) {
-      fetchLocationsInBounds(currentBounds);
-      markAsQueried(currentBounds);
+      fetchLocationsInBounds(currentBounds)
+      markAsQueried(currentBounds)
     }
-  }, [isInitialized, currentBounds, fetchLocationsInBounds, markAsQueried]);
+  }, [isInitialized, currentBounds, fetchLocationsInBounds, markAsQueried])
 
   // Cleanup on unmount
   useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+    return cleanup
+  }, [cleanup])
 
   // Handle location selection from search
   const handleLocationSelect = useCallback(
@@ -102,12 +98,12 @@ export function LocationPicker({
         name: location.name,
         latitude: location.latitude,
         longitude: location.longitude,
-      });
-      setSearchQuery("");
-      clearSearchResults();
+      })
+      setSearchQuery("")
+      clearSearchResults()
     },
-    [selectLocation, clearSearchResults]
-  );
+    [selectLocation, clearSearchResults],
+  )
 
   // Handle marker click
   const handleMarkerClick = useCallback(
@@ -116,65 +112,61 @@ export function LocationPicker({
         name: location.name,
         latitude: location.latitude,
         longitude: location.longitude,
-      });
+      })
     },
-    [selectLocation]
-  );
+    [selectLocation],
+  )
 
   // Handle marker drag
   const handleMarkerDrag = useCallback(
     (e: L.DragEndEvent) => {
-      const marker = e.target;
-      const position = marker.getLatLng();
-      updateSelectedPosition([position.lat, position.lng]);
+      const marker = e.target
+      const position = marker.getLatLng()
+      updateSelectedPosition([position.lat, position.lng])
     },
-    [updateSelectedPosition]
-  );
+    [updateSelectedPosition],
+  )
 
   // Handle map click
   const handleMapClick = useCallback(
     (e: L.LeafletMouseEvent) => {
-      updateSelectedPosition([e.latlng.lat, e.latlng.lng]);
-      setCreateDialogOpen(true);
+      updateSelectedPosition([e.latlng.lat, e.latlng.lng])
+      setCreateDialogOpen(true)
     },
-    [updateSelectedPosition]
-  );
+    [updateSelectedPosition],
+  )
 
   // Handle search button click
   const handleSearchThisArea = useCallback(() => {
     if (currentBounds) {
-      fetchLocationsInBounds(currentBounds);
-      markAsQueried(currentBounds);
+      fetchLocationsInBounds(currentBounds)
+      markAsQueried(currentBounds)
     }
-  }, [currentBounds, fetchLocationsInBounds, markAsQueried]);
+  }, [currentBounds, fetchLocationsInBounds, markAsQueried])
 
   // Create new location
   const handleCreateLocation = useCallback(async () => {
-    if (!selectedPosition || !newLocationName.trim()) return;
+    if (!selectedPosition || !newLocationName.trim()) return
 
     try {
-      const newLocation = await createLocation(
-        newLocationName,
-        selectedPosition[0],
-        selectedPosition[1]
-      );
+      const newLocation = await createLocation(newLocationName, selectedPosition[0], selectedPosition[1])
 
       selectLocation({
         name: newLocation.name,
         latitude: newLocation.latitude,
         longitude: newLocation.longitude,
-      });
+      })
 
-      setCreateDialogOpen(false);
-      setNewLocationName("");
+      setCreateDialogOpen(false)
+      setNewLocationName("")
 
       // Refresh locations if we have current bounds
       if (currentBounds && currentBounds.zoom >= 5) {
-        fetchLocationsInBounds(currentBounds);
-        markAsQueried(currentBounds);
+        fetchLocationsInBounds(currentBounds)
+        markAsQueried(currentBounds)
       }
     } catch (error) {
-      console.error("Error creating location:", error);
+      console.error("Error creating location:", error)
     }
   }, [
     selectedPosition,
@@ -184,38 +176,33 @@ export function LocationPicker({
     currentBounds,
     fetchLocationsInBounds,
     markAsQueried,
-  ]);
+  ])
 
   // Get current location
   const handleGetCurrentLocation = useCallback(async () => {
     try {
-      await getCurrentLocation();
+      await getCurrentLocation()
     } catch (error: any) {
-      console.error("Error getting current location:", error);
+      console.error("Error getting current location:", error)
     }
-  }, [getCurrentLocation]);
+  }, [getCurrentLocation])
 
   const handleMapOpen = () => {
-    setMapModalOpen(true);
-  };
+    setMapModalOpen(true)
+  }
 
   const handleMapClose = () => {
-    setMapModalOpen(false);
-  };
+    setMapModalOpen(false)
+  }
 
   if (!isInitialized) {
     return (
       <Box className={styles.locationPicker}>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          height="100%"
-        >
+        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
           <CircularProgress />
         </Box>
       </Box>
-    );
+    )
   }
 
   return (
@@ -234,12 +221,7 @@ export function LocationPicker({
           onMapOpen={handleMapOpen}
         />
 
-        <Button
-          variant="outlined"
-          startIcon={<MyLocation />}
-          onClick={handleGetCurrentLocation}
-          size="small"
-        >
+        <Button variant="outlined" startIcon={<MyLocation />} onClick={handleGetCurrentLocation} size="small">
           My Location
         </Button>
       </Box>
@@ -248,8 +230,7 @@ export function LocationPicker({
       {selectedPosition && (
         <Paper className={styles.selectedLocation}>
           <Typography variant="body2">
-            <strong>Selected:</strong>{" "}
-            {selectedLocationName || "Custom Location"}
+            <strong>Selected:</strong> {selectedLocationName || "Custom Location"}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {selectedPosition[0].toFixed(6)}, {selectedPosition[1].toFixed(6)}
@@ -275,5 +256,5 @@ export function LocationPicker({
         onCreate={handleCreateLocation}
       />
     </Box>
-  );
+  )
 }

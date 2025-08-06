@@ -1,119 +1,98 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
+import { useState } from 'react'
 import {
   Container,
   Typography,
+  Box,
+  Grid,
   Card,
   CardContent,
   CardActions,
   Button,
-  Box,
   Chip,
-  Grid,
   Alert,
-} from "@mui/material";
-import {
-  CalendarToday,
-  LocationOn,
-  EuroSymbol,
-  People,
-  Edit,
-} from "@mui/icons-material";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import type { EventWithRegistrations } from "@/lib/supabase/types";
-import styles from "./MyEventsPage.module.scss";
+} from '@mui/material'
+import { Add, Edit, Delete } from '@mui/icons-material'
+import { useMyEvents } from '@/lib/queries/events'
+import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
+import { EventFilters } from '@/components/common/EventFilters/EventFilters'
+import styles from './MyEventsPage.module.scss'
 
 export function MyEventsPage() {
-  const t = useTranslations();
-  const router = useRouter();
-  const { user, loading } = useAuth();
+  const t = useTranslations()
+  const router = useRouter()
+  const [filters, setFilters] = useState({
+    level: '',
+    priceMin: 0,
+    priceMax: 1000,
+    dateFrom: '',
+    dateTo: '',
+  })
 
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["my-events", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
+  const { data: events, isLoading, error } = useMyEvents(filters)
 
-      const { data, error } = await supabase
-        .from("events")
-        .select(
-          `
-          *,
-          registrations(
-            id,
-            user:users(id, display_name, email),
-            car:cars(id, make, model, year)
-          )
-        `
-        )
-        .eq("created_by", user.id)
-        .order("event_date", { ascending: true });
+  const handleCreateEvent = () => {
+    router.push('/events/create')
+  }
 
-      if (error) throw error;
-      return data as EventWithRegistrations[];
-    },
-    enabled: !!user,
-  });
+  const handleEditEvent = (eventSlug: string) => {
+    router.push(`/events/${eventSlug}/edit`)
+  }
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth/signin");
+  const handleDeleteEvent = (eventId: string) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      // Delete event logic would go here
+      console.log('Delete event:', eventId)
     }
-  }, [user, loading, router]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  }
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case "beginner":
-        return "success";
-      case "street":
-        return "warning";
-      case "pro":
-        return "error";
+      case 'beginner':
+        return 'success'
+      case 'street':
+        return 'warning'
+      case 'pro':
+        return 'error'
       default:
-        return "default";
+        return 'default'
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "success";
-      case "pending":
-        return "warning";
-      case "rejected":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  if (loading || isLoading) {
-    return <div>{t("common.loading")}</div>;
   }
 
-  if (!user) {
-    return null;
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg" className={styles.container}>
+        <Typography>{t('common.loading')}</Typography>
+      </Container>
+    )
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="lg" className={styles.container}>
+        <Alert severity="error">Failed to load events</Alert>
+      </Container>
+    )
   }
 
   return (
     <Container maxWidth="lg" className={styles.container}>
-      <Typography variant="h4" gutterBottom>
-        My Events
-      </Typography>
+      <Box className={styles.header}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          My Events
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={handleCreateEvent}
+        >
+          Create Event
+        </Button>
+      </Box>
+
+      <EventFilters filters={filters} onFiltersChange={setFilters} />
 
       {events && events.length > 0 ? (
         <Grid container spacing={3}>
@@ -121,75 +100,47 @@ export function MyEventsPage() {
             <Grid item xs={12} md={6} lg={4} key={event.id}>
               <Card className={styles.eventCard}>
                 <CardContent>
-                  <Box className={styles.header}>
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      className={styles.title}
-                    >
-                      {event.title}
-                    </Typography>
-                    <Box className={styles.chips}>
-                      <Chip
-                        label={t(`events.levels.${event.level}`)}
-                        color={getLevelColor(event.level)}
-                        size="small"
-                      />
-                      <Chip
-                        label={t(`events.status.${event.status}`)}
-                        color={getStatusColor(event.status)}
-                        size="small"
-                      />
-                    </Box>
+                  <Typography variant="h6" gutterBottom>
+                    {event.title}
+                  </Typography>
+                  <Typography color="text.secondary" gutterBottom>
+                    {event.location?.name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    {new Date(event.event_date).toLocaleDateString()}
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <Chip
+                      label={event.level}
+                      color={getLevelColor(event.level) as any}
+                      size="small"
+                    />
+                    <Chip
+                      label={`$${event.price}`}
+                      variant="outlined"
+                      size="small"
+                      sx={{ ml: 1 }}
+                    />
                   </Box>
-
-                  {event.description && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      className={styles.description}
-                    >
-                      {event.description}
-                    </Typography>
-                  )}
-
-                  <Box className={styles.details}>
-                    <Box className={styles.detail}>
-                      <CalendarToday fontSize="small" />
-                      <Typography variant="body2">
-                        {formatDate(event.event_date)}
-                      </Typography>
-                    </Box>
-
-                    <Box className={styles.detail}>
-                      <LocationOn fontSize="small" />
-                      <Typography variant="body2">
-                        {event.location_name ||
-                          `${event.location_lat}, ${event.location_lng}`}
-                      </Typography>
-                    </Box>
-
-                    <Box className={styles.detail}>
-                      <EuroSymbol fontSize="small" />
-                      <Typography variant="body2">{event.price} PLN</Typography>
-                    </Box>
-
-                    <Box className={styles.detail}>
-                      <People fontSize="small" />
-                      <Typography variant="body2">
-                        {event.registrations?.length || 0} registered
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {event.description}
+                  </Typography>
                 </CardContent>
-
                 <CardActions>
                   <Button
                     size="small"
                     startIcon={<Edit />}
-                    onClick={() => router.push(`/event/${event.slug}/edit`)}
+                    onClick={() => handleEditEvent(event.slug)}
                   >
-                    Edit Event
+                    Edit
+                  </Button>
+                  <Button
+                    size="small"
+                    color="error"
+                    startIcon={<Delete />}
+                    onClick={() => handleDeleteEvent(event.id)}
+                  >
+                    Delete
                   </Button>
                 </CardActions>
               </Card>
@@ -197,11 +148,22 @@ export function MyEventsPage() {
           ))}
         </Grid>
       ) : (
-        <Alert severity="info">
-          You haven't created any events yet.{" "}
-          <Button href="/events/create">Create your first event</Button>
-        </Alert>
+        <Box className={styles.emptyState}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No events created yet
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Create your first event to start organizing motorsport activities!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleCreateEvent}
+          >
+            Create Your First Event
+          </Button>
+        </Box>
       )}
     </Container>
-  );
+  )
 }

@@ -1,0 +1,25 @@
+.eventsPage {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.filtersContainer {
+  position: sticky;
+  top: 64px; // Height of navbar
+  z-index: 100;
+  background-color: #f8f9fa;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 2rem;
+}
+
+.contentContainer {
+  padding-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .filtersContainer {
+    top: 56px; // Mobile navbar height
+    padding: 0.75rem 0;
+  }
+}

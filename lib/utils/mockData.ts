@@ -22,6 +22,14 @@ const mockEventTitles = [
   "Advanced Drift Techniques",
   "Drift Car Show & Competition",
   "Rookie Drift Experience",
+  "Sunset Drift Session",
+  "Winter Drift Challenge",
+  "Spring Drift Festival",
+  "Summer Drift Series",
+  "Autumn Drift Cup",
+  "Urban Drift Experience",
+  "Mountain Drift Adventure",
+  "Coastal Drift Rally",
 ]
 
 const mockDescriptions = [
@@ -37,6 +45,14 @@ const mockDescriptions = [
   "Advanced techniques workshop for experienced drifters.",
   "Combine car show with competitive drifting action.",
   "First-time drift experience with professional instruction.",
+  "Beautiful sunset backdrop for your drifting experience.",
+  "Special winter conditions drift training and competition.",
+  "Celebrate spring with our biggest drift festival of the year.",
+  "Multi-round summer championship series.",
+  "Autumn colors provide the perfect backdrop for drifting.",
+  "City-based drift experience in urban environments.",
+  "Take your drifting to scenic mountain locations.",
+  "Drift by the coast with ocean views.",
 ]
 
 const mockCreators = [
@@ -45,7 +61,36 @@ const mockCreators = [
   { id: "3", display_name: "Piotr Wiśniewski", email: "piotr@example.com" },
   { id: "4", display_name: "Anna Wójcik", email: "anna@example.com" },
   { id: "5", display_name: "Tomasz Kowalczyk", email: "tomasz@example.com" },
+  { id: "6", display_name: "Katarzyna Lewandowska", email: "katarzyna@example.com" },
+  { id: "7", display_name: "Michał Zieliński", email: "michal@example.com" },
+  { id: "8", display_name: "Agnieszka Szymańska", email: "agnieszka@example.com" },
 ]
+
+export function getTotalPages(filters: {
+  level?: string
+  priceMin?: string
+  priceMax?: string
+  dateFrom?: string
+  dateTo?: string
+} = {}): number {
+  // Simulate different total counts based on filters
+  let baseCount = 127 // Total events without filters
+  
+  if (filters.level) {
+    baseCount = Math.floor(baseCount * 0.4) // Each level has ~40% of total events
+  }
+  
+  if (filters.priceMin || filters.priceMax) {
+    baseCount = Math.floor(baseCount * 0.6) // Price filters reduce results
+  }
+  
+  if (filters.dateFrom || filters.dateTo) {
+    baseCount = Math.floor(baseCount * 0.3) // Date filters significantly reduce results
+  }
+  
+  const eventsPerPage = 10
+  return Math.max(1, Math.ceil(baseCount / eventsPerPage))
+}
 
 export function generateMockEvents(filters: {
   level?: string
@@ -57,43 +102,67 @@ export function generateMockEvents(filters: {
 } = {}): EventWithCreator[] {
   const page = parseInt(filters.page || "1")
   const eventsPerPage = 10
+  const totalPages = getTotalPages(filters)
   
-  // Generate fewer events for later pages to simulate finite data
-  if (page > 5) return []
+  // Return empty array if page is beyond total pages
+  if (page > totalPages) return []
   
   const events: EventWithCreator[] = []
   const startIndex = (page - 1) * eventsPerPage
   
   for (let i = 0; i < eventsPerPage; i++) {
-    const index = startIndex + i
-    const level = filters.level || ["beginner", "street", "pro"][index % 3]
+    const globalIndex = startIndex + i
     
-    // Apply level filter
-    if (filters.level && level !== filters.level) continue
+    // Determine level based on filters or cycle through levels
+    let level: "beginner" | "street" | "pro"
+    if (filters.level) {
+      level = filters.level as "beginner" | "street" | "pro"
+    } else {
+      level = ["beginner", "street", "pro"][globalIndex % 3] as "beginner" | "street" | "pro"
+    }
     
-    const price = Math.floor(Math.random() * 200) + 50
+    // Generate price within filter range or random
+    let price: number
+    const minPrice = filters.priceMin ? parseInt(filters.priceMin) : 30
+    const maxPrice = filters.priceMax ? parseInt(filters.priceMax) : 300
+    price = Math.floor(Math.random() * (maxPrice - minPrice + 1)) + minPrice
     
-    // Apply price filters
-    if (filters.priceMin && price < parseInt(filters.priceMin)) continue
-    if (filters.priceMax && price > parseInt(filters.priceMax)) continue
+    // Generate date within filter range or next 90 days
+    let eventDate: Date
+    const today = new Date()
     
-    // Generate date (next 60 days)
-    const eventDate = new Date()
-    eventDate.setDate(eventDate.getDate() + Math.floor(Math.random() * 60) + 1)
+    if (filters.dateFrom && filters.dateTo) {
+      const fromDate = new Date(filters.dateFrom)
+      const toDate = new Date(filters.dateTo)
+      const timeDiff = toDate.getTime() - fromDate.getTime()
+      eventDate = new Date(fromDate.getTime() + Math.random() * timeDiff)
+    } else if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom)
+      const maxDate = new Date(fromDate)
+      maxDate.setDate(maxDate.getDate() + 90)
+      const timeDiff = maxDate.getTime() - fromDate.getTime()
+      eventDate = new Date(fromDate.getTime() + Math.random() * timeDiff)
+    } else if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo)
+      const minDate = new Date()
+      const timeDiff = toDate.getTime() - minDate.getTime()
+      eventDate = new Date(minDate.getTime() + Math.random() * timeDiff)
+    } else {
+      eventDate = new Date()
+      eventDate.setDate(eventDate.getDate() + Math.floor(Math.random() * 90) + 1)
+    }
     
-    // Apply date filters
-    if (filters.dateFrom && eventDate < new Date(filters.dateFrom)) continue
-    if (filters.dateTo && eventDate > new Date(filters.dateTo)) continue
-    
-    const location = mockLocations[index % mockLocations.length]
-    const creator = mockCreators[index % mockCreators.length]
+    const location = mockLocations[globalIndex % mockLocations.length]
+    const creator = mockCreators[globalIndex % mockCreators.length]
+    const title = mockEventTitles[globalIndex % mockEventTitles.length]
+    const description = mockDescriptions[globalIndex % mockDescriptions.length]
     
     events.push({
-      id: `event-${page}-${i}`,
-      title: mockEventTitles[index % mockEventTitles.length],
-      description: mockDescriptions[index % mockDescriptions.length],
+      id: `event-${globalIndex}`,
+      title,
+      description,
       event_date: eventDate.toISOString(),
-      level: level as "beginner" | "street" | "pro",
+      level,
       price,
       status: "approved",
       created_by: creator.id,

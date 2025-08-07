@@ -2,16 +2,30 @@
   width: 100%;
 }
 
+.resultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
 .title {
   color: #1976d2;
-  margin-bottom: 2rem !important;
+  margin: 0 !important;
   font-weight: 600 !important;
+}
+
+.resultsInfo {
+  white-space: nowrap;
+  font-weight: 500;
 }
 
 .eventsContainer {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-bottom: 3rem;
 }
 
 .loadingContainer {
@@ -28,6 +42,40 @@
   margin-top: 2rem;
 }
 
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+  border-top: 1px solid #e0e0e0;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pagination {
+  .MuiPaginationItem-root {
+    font-weight: 500;
+    
+    &.Mui-selected {
+      background-color: #1976d2;
+      color: white;
+      font-weight: 600;
+      
+      &:hover {
+        background-color: #1565c0;
+      }
+    }
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+  
+  .MuiPaginationItem-ellipsis {
+    color: #666;
+  }
+}
+
 .emptyState {
   text-align: center;
   padding: 4rem 2rem;
@@ -37,12 +85,56 @@
 }
 
 @media (max-width: 768px) {
+  .resultsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
   .title {
     font-size: 1.75rem !important;
-    margin-bottom: 1.5rem !important;
   }
   
   .eventsContainer {
     gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  
+  .loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+  }
+
+  .endMessage {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 2rem;
+  }
+
+  .paginationContainer {
+    padding: 1.5rem 1rem;
+  }
+  
+  .pagination {
+    .MuiPaginationItem-root {
+      min-width: 32px;
+      height: 32px;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    .MuiPaginationItem-root {
+      min-width: 28px;
+      height: 28px;
+      font-size: 0.75rem;
+      margin: 0 1px;
+    }
   }
 }

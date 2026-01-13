@@ -169,9 +169,9 @@ It is **not actively maintained** and is not positioned as a commercial product.
 
 > Details intentionally kept high-level to focus on product decisions rather than framework specifics.
 
-* Modern frontend framework
-* Backend API with auth and payments
-* Relational database
+* Modern frontend framework (Next.JS, Typescript)
+* Backend API with auth and payments (Next.JS, Supabase Auth, Stripe)
+* Relational database (Supabase)
 * Cloud-ready architecture
 
 ---

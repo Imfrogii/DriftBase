@@ -4,8 +4,11 @@ import { getMessages } from "next-intl/server";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Navbar } from "@/components/layout/Navbar/Navbar";
+import { createServerSupabaseClient, getUser } from "@/lib/supabase/server";
 import "../globals.scss";
-import { AuthProvider } from "@/components/providers/AuthProvider";
+import Footer from "@/components/common/Footer/Footer";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
+import { SnackbarProvider } from "@/components/providers/ShackbarProvider";
 
 export const metadata = {
   title: "DriftBase - Motorsport Events Platform",
@@ -26,6 +29,10 @@ export default async function LocaleLayout({
   params: { locale: string };
 }) {
   const messages = await getMessages();
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   return (
     <html lang={locale}>
@@ -33,10 +40,14 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             <QueryProvider>
-              <AuthProvider>
-                <Navbar locale={locale} />
-                <main>{children}</main>
-              </AuthProvider>
+              <SnackbarProvider>
+                <Navbar locale={locale} initialSession={session} />
+                <main>
+                  {children}
+                  <ScrollToTop />
+                </main>
+              </SnackbarProvider>
+              <Footer />
             </QueryProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

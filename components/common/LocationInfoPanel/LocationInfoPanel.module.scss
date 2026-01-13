@@ -1,0 +1,52 @@
+.markerInfoPanelWrapper {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px;
+  background-color: #fff;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+  border-radius: 4px;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.markerInfoPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.viewLargerMapButton {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.directions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 550px) {
+  .markerInfoPanelWrapper {
+    gap: 8px;
+    min-width: 200px;
+    max-width: 250px;
+  }
+}

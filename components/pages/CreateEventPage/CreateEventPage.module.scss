@@ -1,13 +1,32 @@
 .createEventPage {
   min-height: 100vh;
   padding: 2rem 0;
-  background-color: #f5f5f5;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.paper {
+  padding: 2rem;
+  border-radius: 4px;
 }
 
 .formContainer {
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.formSection {
+  margin-bottom: 1.5rem;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
 }
 
 .title {
@@ -19,13 +38,19 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  // gap: 1rem;
+  .datePickerWrapper {
+    width: 100%;
+  }
+  .datePickerPopper {
+    z-index: 2;
+  }
 }
 
-.submitButton {
-  margin-top: 1rem;
-  padding: 12px 0;
-  font-size: 1.1rem;
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 @media (max-width: 768px) {

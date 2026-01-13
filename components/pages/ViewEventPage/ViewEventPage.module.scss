@@ -1,0 +1,165 @@
+.fullEvent {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+.containerEmpty {
+  min-height: calc(100vh - 68px);
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.cancelOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #bababab3;
+  z-index: 4;
+  pointer-events: all;
+  cursor: not-allowed;
+
+  .alert {
+    border-radius: 0;
+    cursor: auto;
+  }
+}
+
+.imageContainer {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  //   aspect-ratio: 4 / 1;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #171717c4;
+  z-index: 1;
+}
+
+.headingContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.heading {
+  font-size: 64px !important;
+  color: #fff;
+  text-transform: uppercase;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.description {
+  margin-top: 24px !important;
+}
+
+.info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 4rem;
+  align-items: center;
+  margin-top: 48px;
+  color: #cfcfcf;
+
+  .infoItem {
+    display: flex;
+    flex-direction: column;
+    // gap: 8px;
+    align-items: flex-start;
+  }
+
+  .infoValue {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.actionButtons {
+  display: flex;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  z-index: 5;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+
+  .button {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    // border-radius: 4px;
+  }
+}
+
+.participants {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  max-height: 400px;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+}
+
+.link {
+  color: #1976d2;
+  margin-left: 2px;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 768px) {
+  .heading {
+    font-size: 48px !important;
+  }
+
+  .info {
+    gap: 1rem 2rem;
+  }
+
+  .containerEmpty {
+    min-height: calc(100vh - 56px);
+  }
+
+  .message {
+    display: inline;
+  }
+}
+
+@media (max-width: 550px) {
+  .imageContainer {
+    height: 500px;
+  }
+  .heading {
+    font-size: 32px !important;
+  }
+
+  .info {
+    gap: 1rem 2rem;
+  }
+}

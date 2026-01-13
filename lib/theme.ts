@@ -3,6 +3,15 @@
 import { createTheme } from "@mui/material/styles";
 
 export const theme = createTheme({
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 768,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
   palette: {
     mode: "light",
     primary: {
@@ -40,14 +49,14 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          borderRadius: 8,
+          borderRadius: 4,
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 4,
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         },
       },

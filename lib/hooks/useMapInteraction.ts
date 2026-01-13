@@ -36,7 +36,6 @@ export function useMapInteraction() {
 
       const latPercentage = centerLatDiff / viewportHeight;
       const lngPercentage = centerLngDiff / viewportWidth;
-      console.log(latPercentage, lngPercentage);
 
       // Consider significant if moved more than 30% of viewport
       return latPercentage > 0.3 || lngPercentage > 0.3;
@@ -48,7 +47,6 @@ export function useMapInteraction() {
     (bounds: MapBounds) => {
       setCurrentBounds(bounds);
 
-      console.log(bounds.zoom);
       // Check if we should show the search button
       if (
         bounds.zoom >= 5 &&

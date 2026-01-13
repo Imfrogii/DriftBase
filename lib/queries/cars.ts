@@ -1,82 +1,91 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import type { Car } from "@/lib/supabase/types";
+import api from "../utils/request";
+import { useRouter } from "next/navigation";
+import { enqueueSnackbar } from "notistack";
+import { useTranslations } from "next-intl";
+import { ApiError } from "../types";
+import { CarLevel } from "../supabase/types";
+import { CarFormData } from "@/components/forms/CarModalForm/CarModalForm";
 
-export function useCars(userId?: string) {
+export function useCars({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["cars", userId],
+    enabled,
+    queryKey: ["cars"],
     queryFn: async () => {
-      let query = supabase
-        .from("cars")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data } = await api.get(`/api/cars`);
 
-      if (userId) {
-        query = query.eq("user_id", userId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Car[];
+      return data.cars;
     },
-    enabled: !!userId,
   });
 }
 
-export function useCreateCar() {
+export function useCreateCar(onClose: () => void) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const t = useTranslations();
 
   return useMutation({
-    mutationFn: async (
-      carData: Omit<Car, "id" | "created_at" | "updated_at">
-    ) => {
-      const { data, error } = await supabase
-        .from("cars")
-        .insert(carData)
-        .select()
-        .single();
+    mutationFn: async (carData: CarFormData) => {
+      const { data } = await api.post(`/api/cars`, carData);
 
-      if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["cars", variables.user_id] });
+    onSuccess: () => {
+      enqueueSnackbar("Car created successfully", { variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+      onClose();
+      router.refresh();
+    },
+    onError: (error: ApiError) => {
+      enqueueSnackbar(t(error.error), { variant: "error" });
+      onClose();
     },
   });
 }
 
-export function useUpdateCar() {
+export function useUpdateCar(onClose: () => void) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const t = useTranslations();
 
   return useMutation({
-    mutationFn: async ({ id, ...carData }: Partial<Car> & { id: string }) => {
-      const { data, error } = await supabase
-        .from("cars")
-        .update(carData)
-        .eq("id", id)
-        .select()
-        .single();
+    mutationFn: async ({ id, ...carData }: CarFormData & { id: string }) => {
+      const { data } = await api.put(`/api/cars/${id}`, carData);
 
-      if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["cars", data.user_id] });
+    onSuccess: () => {
+      enqueueSnackbar("Car updated successfully", { variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+      onClose();
+      router.refresh();
+    },
+    onError: (error: ApiError) => {
+      enqueueSnackbar(t(error.error), { variant: "error" });
+      onClose();
     },
   });
 }
 
-export function useDeleteCar() {
+export function useDeleteCar(setDeletingCar: (id: string | null) => void) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const t = useTranslations("errors");
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("cars").delete().eq("id", id);
-
-      if (error) throw error;
+      const { data } = await api.delete(`/api/cars/${id}`);
+      return data;
     },
-    onSuccess: (_, id) => {
+    onSuccess: () => {
+      enqueueSnackbar("Car deleted successfully", { variant: "success" });
       queryClient.invalidateQueries({ queryKey: ["cars"] });
+      setDeletingCar(null);
+      router.refresh();
+    },
+    onError: (error: ApiError) => {
+      enqueueSnackbar(t(error.error), { variant: "error" });
+      setDeletingCar(null);
     },
   });
 }

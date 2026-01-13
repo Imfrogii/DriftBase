@@ -1,0 +1,33 @@
+.container {
+  min-height: calc(100vh - 68px);
+  display: flex !important;
+  flex-direction: column;
+  padding-bottom: 3rem;
+
+  .info {
+    margin-bottom: 1rem;
+  }
+
+  .title {
+    height: 38px;
+    width: 170px;
+    transform: scale(1);
+  }
+  .button {
+    height: 38px;
+    width: 150px;
+    transform: scale(1);
+  }
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    min-height: calc(100vh - 56px);
+  }
+}

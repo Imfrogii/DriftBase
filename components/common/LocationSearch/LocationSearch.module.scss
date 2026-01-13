@@ -1,0 +1,22 @@
+.wrapper {
+  width: 100%;
+  max-width: 400px;
+  background-color: #fff;
+
+  .MuiOutlinedInput-root {
+    border-radius: 4px;
+  }
+
+  .MuiAutocomplete-listbox {
+    font-size: 14px;
+  }
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 8px;
+}

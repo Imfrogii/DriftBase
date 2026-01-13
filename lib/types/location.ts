@@ -1,10 +1,16 @@
 export interface Location {
-  id?: string;
+  id: string;
   name: string;
-  latitude: number;
-  longitude: number;
-  created_at?: string;
+  geom: string;
+  address: string;
+  location_id?: string;
 }
+
+export type LocationWithEvents = Location & {
+  location_id: string;
+  event_count: number;
+  event_ids: string[];
+};
 
 export interface LocationSearchParams {
   q?: string;

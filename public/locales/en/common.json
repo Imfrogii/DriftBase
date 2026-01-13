@@ -63,18 +63,6 @@
       "signin_link": "Already have an account? Sign in"
     }
   },
-  "create_event": {
-    "title": "Create New Event",
-    "form": {
-      "title": "Event Title",
-      "description": "Description",
-      "date": "Event Date",
-      "location": "Location",
-      "level": "Event Level",
-      "price": "Price (PLN)",
-      "submit": "Create Event"
-    }
-  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
@@ -82,6 +70,53 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
-    "edit": "Edit"
+    "edit": "Edit",
+    "register": "Register"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "minLength": "{{field}} must be at least {{count}} characters",
+    "mustBeNumber": "{{field}} must be a number",
+    "mustBeInteger": "{{field}} must be an integer",
+    "positive": "{{field}} must be positive",
+    "minValue": "{{field}} must be at least {{count}}",
+    "invalidOption": "Invalid option",
+    "afterDate": "{{field}} must be after {{after}}"
+  },
+  "create_event": {
+    "form": {
+      "title": "Title",
+      "description": "Description",
+      "location": "Location",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "level": "Level",
+      "type": "Type",
+      "price": "Price (PLN)",
+      "driversCount": "Drivers count"
+    }
+  },
+  "scanner": {
+    "success": "Check-In successful!"
+  },
+  "errorCodes": {
+    "NETWORK_ERROR": "Network error. Please check your connection.",
+    "UNKNOWN": "Something went wrong. Please try again later.",
+    "NOT_FOUND": "Something not found.",
+    "FORBIDDEN": "You do not have permission to perform this action.",
+    "auth": {
+      "INVALID_CREDENTIALS": "Invalid credentials",
+      "USER_NOT_FOUND": "No account found with this email.",
+      "EMAIL_NOT_CONFIRMED": "Your email address is not verified."
+    },
+    "scanner": {
+      "NOT_FOUND": "Registration not found.",
+      "ALREADY_CHECKED_IN": "You have already checked in.",
+      "EVENT_NOT_STARTED": "Check-In will open one hour before the event starts.",
+      "EVENT_ALREADY_ENDED": "You can check in up to one hour after the event ends.",
+      "FORBIDDEN": "You’re trying to check in to an event that doesn’t belong to you.",
+      "NOT_PAID": "Registration is not paid.",
+      "CODE_EXPIRED": "Registration code has expired."
+    }
   }
 }

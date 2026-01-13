@@ -1,0 +1,67 @@
+.filtersContainer .leftHandFilters {
+  min-height: unset !important;
+  max-height: 100%;
+  overflow: auto;
+  height: 100% !important;
+  flex-shrink: 0;
+  border-radius: 0 !important;
+}
+
+.header {
+  position: absolute !important;
+  display: flex;
+  top: 8px;
+  padding: 0 1rem;
+  z-index: 2;
+  width: 100%;
+  height: 30px;
+
+  .openFiltersButton {
+    display: none;
+    white-space: nowrap;
+  }
+
+  .closeMapButton {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .filtersContainer {
+    position: fixed;
+    visibility: hidden;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    transition: left 0.3s ease;
+    z-index: -1;
+    &.opened {
+      visibility: visible;
+      left: 0;
+      z-index: 3;
+    }
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    z-index: -1;
+    background-color: #00000048;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+  }
+
+  .opened .leftHandFilters {
+    height: 100vh !important;
+    min-height: unset;
+    overflow-y: auto;
+    width: auto;
+    max-width: 600px;
+  }
+
+  .header .openFiltersButton {
+    display: inline-flex;
+  }
+}

@@ -1,0 +1,114 @@
+.mapContainer {
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  background-color: white;
+  height: 150px;
+  width: 285px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.textContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  margin: auto;
+  height: 100%;
+  background-color: #1919190f;
+}
+
+.mapButtonWrapper {
+  background: #fff;
+  border-radius: 4px;
+}
+
+.mapPreview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.mapImage {
+  width: 100%;
+  transition: transform 0.4s ease;
+  object-fit: cover;
+  filter: blur(1px);
+}
+
+.mapContainer:hover .button {
+  transition: transform 0.4s ease;
+  transform: scale(1.04);
+}
+
+.filtersWrapperContainer {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 150px - 1.5rem);
+}
+
+.filtersContainer {
+  height: 100%;
+}
+
+.mobileLinks {
+  display: none;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .filtersContainer {
+    position: fixed;
+    visibility: hidden;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    transition: left 0.3s ease;
+    z-index: -1;
+    &.opened {
+      visibility: visible;
+      left: 0;
+      z-index: 3;
+    }
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    z-index: -1;
+    background-color: #00000048;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+  }
+
+  .opened .filtersInnerContainer {
+    height: 100vh;
+    min-height: unset;
+    overflow-y: auto;
+    width: auto;
+    max-width: 600px;
+  }
+
+  .mobileLinks {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .mapContainer {
+    display: none;
+  }
+}

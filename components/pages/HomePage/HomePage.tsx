@@ -1,92 +1,79 @@
-"use client";
-
 import type React from "react";
-
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Container, Typography, Tabs, Tab, Box } from "@mui/material";
-import { EventFilters } from "@/components/common/EventFilters/EventFilters";
+import { Button, Container, Typography } from "@mui/material";
 import { EventCard } from "@/components/common/EventCard/EventCard";
-import { EventMap } from "@/components/common/EventMap/EventMap";
 import styles from "./HomePage.module.scss";
-import { useEvents } from "@/lib/queries/events";
+import { getEvents } from "@/lib/api/events";
+import { getLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
+import { EventsFilters } from "@/components/common/EventsFilters/EventsFilters";
+import PromoMapSection from "@/components/common/PromoMapSection/PromoMapSection";
+import Image from "next/image";
+import { SortOrder } from "@/lib/helpers/filters";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
+export async function HomePage() {
+  const t = await getTranslations();
+  const locale = await getLocale();
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-export function HomePage() {
-  const t = useTranslations();
-  const [tabValue, setTabValue] = useState(0);
-  const [filters, setFilters] = useState({
-    level: "",
-    priceRange: [0, 1000],
-    dateRange: { start: null, end: null },
+  // TODO запрос отправляется с my-registrations страницы почему-то
+  const data = await getEvents({
+    size: 3,
+    sortBy: "created_at",
+    sortOrder: SortOrder.DESC,
   });
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  const { data, isLoading } = useEvents(filters);
 
   return (
     <div className={styles.homePage}>
-      <Container maxWidth="xl">
-        <div className={styles.header}>
-          <Typography variant="h1" component="h1" className={styles.title}>
-            {t("home.title")}
-          </Typography>
-          <Typography variant="h6" className={styles.subtitle}>
-            {t("home.subtitle")}
-          </Typography>
-        </div>
+      <Container maxWidth={false} className={styles.mainContainer}>
+        <Container maxWidth="lg" className={styles.container}>
+          <div className={styles.imageContainer}>
+            <Image
+              src="homeHero2.png"
+              alt="Home Hero"
+              fill
+              quality={30}
+              priority={false}
+              className={styles.heroImage}
+              loading="lazy"
+            />
+          </div>
+          <div className={styles.filtersSection}>
+            <EventsFilters isHomePage={true} />
+          </div>
 
-        <div className={styles.filtersSection}>
-          <EventFilters filters={filters} onFiltersChange={setFilters} />
-        </div>
+          <div className={styles.header}>
+            <Typography variant="h1" component="h1" className={styles.title}>
+              Find your drift event
+            </Typography>
+            <Typography variant="h6" className={styles.subtitle}>
+              Discover the best drifting opportunities near you
+            </Typography>
+            <Button
+              component={Link}
+              href={`/${locale}/events`}
+              variant="contained"
+              color="primary"
+              size="large"
+              className={styles.button}
+            >
+              View all events
+            </Button>
+          </div>
+        </Container>
+      </Container>
 
+      <Container maxWidth="lg" className={styles.container}>
+        <Typography variant="h3" className={styles.sectionTitle}>
+          Newly created events
+        </Typography>
         <div className={styles.contentSection}>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            aria-label="event view tabs"
-          >
-            <Tab label={t("home.tabs.list")} />
-            <Tab label={t("home.tabs.map")} />
-          </Tabs>
-
-          <TabPanel value={tabValue} index={0}>
-            <div className={styles.eventsList}>
-              {data &&
-                data.map((event) => <EventCard key={event.id} event={event} />)}
-            </div>
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={1}>
-            <div className={styles.mapContainer}>
-              <EventMap events={data ? data : []} />
-            </div>
-          </TabPanel>
+          <div className={styles.eventsList}>
+            {data?.events &&
+              data.events.map((event) => (
+                <EventCard key={event.slug} event={event} />
+              ))}
+          </div>
         </div>
+        <PromoMapSection />
       </Container>
     </div>
   );

@@ -6,17 +6,20 @@ import {
   Box,
   TextField,
   Typography,
-  Paper,
   Alert,
   Link as MuiLink,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { Button } from "@/components/common/Button/Button";
-import { supabase } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
+import { createClient } from "@/lib/supabase/client";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import styles from "./AuthForm.module.scss";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { enqueueSnackbar } from "notistack";
+import { AuthError } from "@/lib/types/errors";
+import { getErrorTranslation } from "@/lib/helpers/getErrorTranslation";
 
 interface AuthFormData {
   email: string;
@@ -26,16 +29,17 @@ interface AuthFormData {
 
 interface AuthFormProps {
   mode: "signin" | "signup";
-  onSuccess?: () => void;
 }
 
-export function AuthForm({ mode, onSuccess }: AuthFormProps) {
+export function AuthForm({ mode }: AuthFormProps) {
+  const supabase = createClient();
   const router = useRouter();
-  const { setUser } = useAuth();
-  const t = useTranslations("auth");
+  const locale = useLocale();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+
+  const t = useTranslations();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const {
     register,
@@ -45,61 +49,59 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
 
   const onSubmit = async (data: AuthFormData) => {
     setLoading(true);
-    setError(null);
-    setSuccess(null);
-
+    // TODO if link from email expired - there is no way to resend it
     try {
       if (mode === "signup") {
-        const { data: userData, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
           options: {
             data: {
               display_name: data.displayName,
+              emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback`,
             },
           },
         });
 
         if (error) throw error;
-        setSuccess(t("signupSuccess"));
-        // setUser(userData.user);
-        router.push("/");
+
+        enqueueSnackbar(t("checkEmailForConfirmation"), { variant: "success" });
       } else {
-        const { data: userData, error } =
-          await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-          });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
 
         if (error) throw error;
-        // setUser(userData.user);
-        router.push("/");
+
+        enqueueSnackbar(t("signInSuccess"), { variant: "success" });
+
+        router.replace(
+          redirectUrl ? decodeURIComponent(redirectUrl) : `/${locale}`
+        );
       }
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      const { code } = error as { code: string };
+      enqueueSnackbar(
+        getErrorTranslation(
+          t,
+          AuthError[code.toUpperCase() as AuthError]
+            ? code.toUpperCase()
+            : "UNKNOWN",
+          "auth"
+        ),
+        {
+          variant: "error",
+          preventDuplicate: false,
+        }
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Paper className={styles.container}>
-      <Typography variant="h4" component="h1" className={styles.title}>
-        {mode === "signin" ? t("signIn") : t("signUp")}
-      </Typography>
-
-      {error && (
-        <Alert severity="error" className={styles.alert}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" className={styles.alert}>
-          {success}
-        </Alert>
-      )}
-
+    <Box>
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit)}
@@ -145,6 +147,26 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
           helperText={errors.password?.message}
         />
 
+        {mode === "signup" && (
+          <FormControlLabel
+            control={<Checkbox />}
+            label={
+              <Typography>
+                I agree to the{" "}
+                <Typography
+                  component={Link}
+                  href={`/${locale}/terms`}
+                  color="primary"
+                >
+                  <Typography component={"span"}>
+                    {t("terms and conditions")}
+                  </Typography>
+                </Typography>
+              </Typography>
+            }
+          />
+        )}
+
         <Button
           type="submit"
           variant="contained"
@@ -160,20 +182,20 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
           {mode === "signin" ? (
             <Typography variant="body2">
               {t("noAccount")}{" "}
-              <Link href="/auth/signup" passHref>
-                <MuiLink>{t("signUp")}</MuiLink>
+              <Link href={`/${locale}/auth/signup`} passHref>
+                <Typography component={"span"}>{t("signUp")}</Typography>
               </Link>
             </Typography>
           ) : (
             <Typography variant="body2">
               {t("haveAccount")}{" "}
-              <Link href="/auth/signin" passHref>
-                <MuiLink>{t("signIn")}</MuiLink>
+              <Link href={`/${locale}/auth/signin`} passHref>
+                <Typography component={"span"}>{t("signIn")}</Typography>
               </Link>
             </Typography>
           )}
         </Box>
       </Box>
-    </Paper>
+    </Box>
   );
 }

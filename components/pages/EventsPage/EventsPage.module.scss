@@ -1,0 +1,40 @@
+.eventsPage {
+  min-height: 100vh;
+  height: max-content;
+  background-color: #f8f9fa;
+  position: relative;
+}
+
+.container {
+  display: flex !important;
+  flex-wrap: nowrap;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+  align-items: stretch;
+}
+
+.filtersContainer {
+  background-color: #f8f9fa;
+  margin-top: 68px;
+}
+
+.skeleton {
+  margin-top: 68px;
+}
+
+.contentContainer {
+  width: 100%;
+}
+
+.eventListSkeleton {
+  margin-top: 68px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  .filtersContainer {
+    margin-top: 0;
+  }
+}

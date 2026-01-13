@@ -1,0 +1,79 @@
+.container {
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.paper {
+  padding: 2rem 0;
+  border-radius: 4px;
+}
+
+.formContainer {
+  // padding: 2rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.reader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  border: none !important;
+
+  :global(button.html5-qrcode-element) {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 12px;
+    background: #ff6600;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: none;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #e55a00;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.manualInput {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+.codeInput {
+  // width: 164px;
+}
+
+.confirmButton {
+  margin-left: auto;
+}
+
+.alert {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  font-size: 1.2rem;
+}

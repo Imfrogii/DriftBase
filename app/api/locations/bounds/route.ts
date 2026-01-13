@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -9,52 +9,49 @@ export async function GET(request: NextRequest) {
   const west = Number.parseFloat(searchParams.get("west") || "0");
   const limit = Number.parseInt(searchParams.get("limit") || "100");
 
-  const supabase = createServerClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     // Validate bounds
     if (!north || !south || !east || !west) {
       return NextResponse.json(
-        { error: "Invalid bounds parameters" },
+        { message: "Invalid bounds parameters" },
         { status: 400 }
       );
     }
 
     if (north <= south || east <= west) {
       return NextResponse.json(
-        { error: "Invalid bounds: north must be > south, east must be > west" },
+        {
+          message: "Invalid bounds: north must be > south, east must be > west",
+        },
         { status: 400 }
       );
     }
 
     // Query locations within bounds
-    const { data: locations, error } = await supabase
-      .from("locations")
-      .select("*")
-      .gte("latitude", south)
-      .lte("latitude", north)
-      .gte("longitude", west)
-      .lte("longitude", east)
-      //   .limit(limit)
-      .order("name");
+    const { data, error } = await supabase.rpc("locations_in_bbox", {
+      west,
+      south,
+      east,
+      north,
+    });
 
     if (error) {
       console.error("Database error:", error);
       return NextResponse.json(
-        { error: "Failed to fetch locations" },
+        { message: "Failed to fetch locations" },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      locations: locations || [],
-      bounds: { north, south, east, west },
-      count: locations?.length || 0,
+      locations: data || [],
     });
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }

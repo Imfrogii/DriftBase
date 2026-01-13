@@ -4,3 +4,7 @@ export type TFilters = {
   dateFrom?: string;
   dateTo?: string;
 };
+
+export type ApiError = {
+  message: string;
+};

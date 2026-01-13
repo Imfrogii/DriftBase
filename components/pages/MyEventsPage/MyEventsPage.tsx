@@ -1,207 +1,146 @@
-"use client";
-
-import { useEffect } from "react";
+import EventRowCard from "@/components/common/EventRowCard/EventRowCard";
+import { getMyEvents } from "@/lib/api/events";
+import { parseFilters } from "@/lib/helpers/filters";
+import { roundCount } from "@/lib/helpers/numbers";
 import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
   Box,
-  Chip,
-  Grid,
+  Typography,
+  Stack,
+  Container,
+  Button,
   Alert,
 } from "@mui/material";
-import {
-  CalendarToday,
-  LocationOn,
-  EuroSymbol,
-  People,
-  Edit,
-} from "@mui/icons-material";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import type { EventWithRegistrations } from "@/lib/supabase/types";
+import { Add, Edit, Delete, QrCode } from "@mui/icons-material";
+import { getLocale } from "next-intl/server";
+import { Suspense } from "react";
+import Pagination from "@/components/common/Pagination/Pagination";
+import { MyEventsProps } from "@/app/[locale]/my-events/page";
+import Link from "next/link";
+import classNames from "classnames";
 import styles from "./MyEventsPage.module.scss";
+import eventListStyles from "../../common/EventsList/EventsList.module.scss";
 
-export function MyEventsPage() {
-  const t = useTranslations();
-  const router = useRouter();
-  const { user, loading } = useAuth();
+const PAGE_SIZE = 5;
 
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["my-events", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
+type MyEventsPageProps = Omit<MyEventsProps, "params"> & {
+  userId: string;
+};
 
-      const { data, error } = await supabase
-        .from("events")
-        .select(
-          `
-          *,
-          registrations(
-            id,
-            user:users(id, display_name, email),
-            car:cars(id, make, model, year)
-          )
-        `
-        )
-        .eq("created_by", user.id)
-        .order("event_date", { ascending: true });
-
-      if (error) throw error;
-      return data as EventWithRegistrations[];
-    },
-    enabled: !!user,
+export async function MyEventsPage({
+  searchParams,
+  userId,
+}: MyEventsPageProps) {
+  const locale = await getLocale();
+  const params = await searchParams;
+  // TODO move request to FE and make this component as client
+  const { events, totalItems } = await getMyEvents({
+    page: Number(params?.page) || 1,
+    size: PAGE_SIZE,
+    userId,
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth/signin");
-    }
-  }, [user, loading, router]);
+  const totalPages = totalItems ? Math.ceil(totalItems / PAGE_SIZE) : 0;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case "beginner":
-        return "success";
-      case "street":
-        return "warning";
-      case "pro":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "success";
-      case "pending":
-        return "warning";
-      case "rejected":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  if (loading || isLoading) {
-    return <div>{t("common.loading")}</div>;
+  if (!events?.length) {
+    return (
+      <Container
+        maxWidth="lg"
+        className={classNames(styles.container, styles.containerEmpty)}
+      >
+        <Box className={styles.emptyState}>
+          <Typography variant="h5" color="text.secondary" gutterBottom>
+            Nothing here yet
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Time to change that!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            component={Link}
+            href={`/${locale}/events/create`}
+          >
+            Create Event
+          </Button>
+        </Box>
+      </Container>
+    );
   }
 
-  if (!user) {
-    return null;
-  }
+  const roundedTotalItems = totalItems ? roundCount(totalItems) : 0;
 
   return (
     <Container maxWidth="lg" className={styles.container}>
-      <Typography variant="h4" gutterBottom>
-        My Events
-      </Typography>
-
-      {events && events.length > 0 ? (
-        <Grid container spacing={3}>
-          {events.map((event) => (
-            <Grid item xs={12} md={6} lg={4} key={event.id}>
-              <Card className={styles.eventCard}>
-                <CardContent>
-                  <Box className={styles.header}>
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      className={styles.title}
-                    >
-                      {event.title}
-                    </Typography>
-                    <Box className={styles.chips}>
-                      <Chip
-                        label={t(`events.levels.${event.level}`)}
-                        color={getLevelColor(event.level)}
-                        size="small"
-                      />
-                      <Chip
-                        label={t(`events.status.${event.status}`)}
-                        color={getStatusColor(event.status)}
-                        size="small"
-                      />
-                    </Box>
-                  </Box>
-
-                  {event.description && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      className={styles.description}
-                    >
-                      {event.description}
-                    </Typography>
-                  )}
-
-                  <Box className={styles.details}>
-                    <Box className={styles.detail}>
-                      <CalendarToday fontSize="small" />
-                      <Typography variant="body2">
-                        {formatDate(event.event_date)}
-                      </Typography>
-                    </Box>
-
-                    <Box className={styles.detail}>
-                      <LocationOn fontSize="small" />
-                      <Typography variant="body2">
-                        {event.location_name ||
-                          `${event.location_lat}, ${event.location_lng}`}
-                      </Typography>
-                    </Box>
-
-                    <Box className={styles.detail}>
-                      <EuroSymbol fontSize="small" />
-                      <Typography variant="body2">{event.price} PLN</Typography>
-                    </Box>
-
-                    <Box className={styles.detail}>
-                      <People fontSize="small" />
-                      <Typography variant="body2">
-                        {event.registrations?.length || 0} registered
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-
-                <CardActions>
-                  <Button
-                    size="small"
-                    startIcon={<Edit />}
-                    onClick={() => router.push(`/event/${event.slug}/edit`)}
-                  >
-                    Edit Event
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Alert severity="info">
-          You haven't created any events yet.{" "}
-          <Button href="/events/create">Create your first event</Button>
+      <Box className={styles.header}>
+        <Box className={styles.row}>
+          <Typography variant="h2">My Events</Typography>
+          <Box className={styles.actions}>
+            <Button
+              variant="outlined"
+              startIcon={<QrCode />}
+              component={Link}
+              href={`/${locale}/scanner`}
+            >
+              Code Scanner
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              component={Link}
+              href={`/${locale}/events/create`}
+            >
+              Create Event
+            </Button>
+          </Box>
+        </Box>
+        <Alert
+          severity="info"
+          className={styles.alert}
+          classes={{ message: styles.message }}
+          variant="standard"
+        >
+          <Typography variant="body2" color="text.secondary">
+            Здесь отображаются все события, которые вы создали.
+          </Typography>
         </Alert>
-      )}
+      </Box>
+      <Box className={eventListStyles.eventsList}>
+        <Box className={eventListStyles.resultsHeader}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            className={eventListStyles.resultsInfo}
+          >
+            Found {roundedTotalItems}{" "}
+            {roundedTotalItems !== totalItems ? "+" : ""} events
+          </Typography>
+        </Box>
+
+        <Box className={eventListStyles.eventsContainer}>
+          {events.map((event) => (
+            <EventRowCard
+              key={event.slug}
+              locale={locale}
+              event={event}
+              isMyEventsPage={true}
+            />
+          ))}
+        </Box>
+
+        {totalPages > 1 && (
+          <Box className={eventListStyles.paginationContainer}>
+            <Stack spacing={2} alignItems="center">
+              <Suspense fallback={<span>Loading pagination...</span>}>
+                <Pagination
+                  params={parseFilters(params).toString()}
+                  totalPages={totalPages}
+                  pageUrl={`/${locale}/my-events`}
+                />
+              </Suspense>
+            </Stack>
+          </Box>
+        )}
+      </Box>
     </Container>
   );
 }

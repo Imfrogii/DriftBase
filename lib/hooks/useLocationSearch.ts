@@ -2,11 +2,12 @@
 
 import { useState, useCallback, useRef } from "react";
 import type { Location } from "@/lib/types/location";
-import type L from "leaflet";
+import { LngLatBounds } from "react-map-gl/dist/esm/types";
+import api from "../utils/request";
 
-interface MapBounds {
+export interface MapBounds {
   center: { lat: number; lng: number };
-  bounds: L.LatLngBounds;
+  bounds: LngLatBounds;
   zoom: number;
 }
 
@@ -30,10 +31,7 @@ export function useLocationSearch() {
         limit: "10",
       });
 
-      const response = await fetch(`/api/locations/search?${params}`);
-      if (!response.ok) throw new Error("Failed to search locations");
-
-      const data = await response.json();
+      const { data } = await api.get(`/api/locations/search?${params}`);
       setSearchResults(data.locations || []);
     } catch (error) {
       console.error("Error searching locations:", error);
@@ -61,18 +59,13 @@ export function useLocationSearch() {
         south: bounds.bounds.getSouth().toString(),
         east: bounds.bounds.getEast().toString(),
         west: bounds.bounds.getWest().toString(),
-        limit: "100",
       });
 
-      const response = await fetch(`/api/locations/bounds?${params}`, {
+      const { data } = await api.get(`/api/locations/bounds?${params}`, {
         signal: abortControllerRef.current.signal,
       });
 
-      if (!response.ok) throw new Error("Failed to fetch locations");
-
-      const data = await response.json();
-      setNearbyLocations(data.locations || []);
-      console.log("Fetched locations in bounds:", data.locations);
+      setNearbyLocations(data?.locations || []);
     } catch (error: any) {
       if (error.name !== "AbortError") {
         console.error("Error fetching locations:", error);
@@ -84,22 +77,27 @@ export function useLocationSearch() {
   }, []);
 
   const createLocation = useCallback(
-    async (name: string, latitude: number, longitude: number) => {
+    async ({
+      name,
+      address,
+      latitude,
+      longitude,
+    }: {
+      name: string;
+      address: string;
+      latitude: number;
+      longitude: number;
+    }) => {
       try {
-        const response = await fetch("/api/locations/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, latitude, longitude }),
+        const { data } = await api.post(`/api/locations`, {
+          name,
+          latitude,
+          longitude,
+          address,
         });
 
-        if (!response.ok) throw new Error("Failed to create location");
-
-        const data = await response.json();
         return data.location;
       } catch (error) {
-        console.error("Error creating location:", error);
         throw new Error("Failed to create location");
       }
     },

@@ -1,29 +1,72 @@
 .homePage {
   min-height: 100vh;
-  padding: 2rem 0;
+  position: relative;
+}
+
+.homePage .mainContainer {
+  padding: 0;
+  padding-bottom: 2rem;
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.container {
+  margin-bottom: 2rem;
+}
+
+.imageContainer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.heroImage {
+  object-fit: cover;
+  object-position: center;
 }
 
 .header {
+  margin: auto;
+  background: #fff;
   text-align: center;
-  margin-bottom: 3rem;
+  padding: 20px 40px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  width: fit-content;
+
+  &:hover .button {
+    transform: scale(1.02);
+  }
 
   .title {
-    color: #1976d2;
+    // color: #1976d2;
     margin-bottom: 1rem;
+    font-size: 60px;
   }
 
   .subtitle {
     color: #666;
-    max-width: 600px;
     margin: 0 auto;
+    font-size: 28px;
+  }
+
+  .button {
+    margin-top: 1.5rem;
+    padding: 14px 40px;
+    transition: transform 0.4s ease;
   }
 }
 
 .filtersSection {
   margin-bottom: 2rem;
+  padding-top: 2rem;
 }
 
 .contentSection {
+  margin-bottom: 1rem;
   .eventsList {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -33,22 +76,33 @@
 
   .mapContainer {
     height: 600px;
-    border-radius: 12px;
+    border-radius: 4px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 }
 
-@media (max-width: 768px) {
-  .homePage {
-    padding: 1rem 0;
-  }
+.viewAllBlock {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
 
+@media (max-width: 950px) {
   .header {
-    margin-bottom: 2rem;
+    .title {
+      font-size: 3rem;
+    }
+  }
+}
 
+@media (max-width: 768px) {
+  .header {
     .title {
       font-size: 2rem;
+    }
+    .subtitle {
+      font-size: 1.25rem;
     }
   }
 

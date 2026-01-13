@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -16,7 +15,6 @@ import {
   Box,
   Container,
   useMediaQuery,
-  useTheme,
   Drawer,
   List,
   ListItem,
@@ -24,15 +22,22 @@ import {
 } from "@mui/material";
 import { Menu as MenuIcon, AccountCircle, Language } from "@mui/icons-material";
 import styles from "./Navbar.module.scss";
-import { useAuth } from "@/lib/hooks/useAuth";
+import Link from "next/link";
+import { useSession } from "@/lib/hooks/useSession";
+import { Session } from "@supabase/supabase-js";
 
-export function Navbar({ locale }: { locale: string }) {
+export function Navbar({
+  locale,
+  initialSession,
+}: {
+  locale: string;
+  initialSession: Session | null;
+}) {
   const t = useTranslations();
-  const router = useRouter();
   const pathname = usePathname();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { dbUser, signOut } = useAuth();
+  const isMobile = useMediaQuery("(max-width:768px)");
+  const router = useRouter();
+  const { session, logout } = useSession(initialSession);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [langAnchorEl, setLangAnchorEl] = useState<null | HTMLElement>(null);
@@ -58,51 +63,53 @@ export function Navbar({ locale }: { locale: string }) {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    setMobileOpen(false);
+  const getChangeLanguageLink = (newLocale: string) => {
+    return pathname.replace(/^\/[a-z]{2}/, `/${newLocale}`);
   };
 
-  const changeLanguage = (locale: string) => {
-    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${locale}`);
-    router.push(newPath);
-    handleLangClose();
+  const handleSignOut = async () => {
+    try {
+      handleClose();
+      await logout();
+
+      router.refresh();
+    } catch (error) {
+      console.error("Full logout error:", error);
+    }
   };
 
   const navItems = [
-    { label: t("nav.home"), path: "/" },
-    { label: t("nav.events"), path: "/events" },
-    ...(dbUser
-      ? [
-          { label: t("nav.create"), path: `/${locale}/events/create` },
-          { label: t("nav.profile"), path: `/${locale}/profile` },
-        ]
+    { label: t("nav.events"), path: `/${locale}/events` },
+    ...(session
+      ? [{ label: t("nav.create"), path: `/${locale}/events/create` }]
       : []),
   ];
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
-        DriftBase
-      </Typography>
+      <Link href={`/${locale}`}>
+        <Typography variant="h6">DriftBase</Typography>
+      </Link>
       <List>
         {navItems.map((item) => (
-          <ListItem key={item.path} onClick={() => handleNavigation(item.path)}>
-            <ListItemText primary={item.label} />
-          </ListItem>
+          <Link key={item.path} href={item.path}>
+            <ListItem>
+              <ListItemText primary={item.label} />
+            </ListItem>
+          </Link>
         ))}
-        {!dbUser && (
+        {!session && (
           <>
-            <ListItem
-              onClick={() => handleNavigation(`/${locale}/auth/signin`)}
-            >
-              <ListItemText primary={t("nav.signin")} />
-            </ListItem>
-            <ListItem
-              onClick={() => handleNavigation(`/${locale}/auth/signup`)}
-            >
-              <ListItemText primary={t("nav.signup")} />
-            </ListItem>
+            <Link href={`/${locale}/auth/signin`}>
+              <ListItem>
+                <ListItemText primary={t("nav.signin")} />
+              </ListItem>
+            </Link>
+            <Link href={`/${locale}/auth/signup`}>
+              <ListItem>
+                <ListItemText primary={t("nav.signup")} />
+              </ListItem>
+            </Link>
           </>
         )}
       </List>
@@ -112,8 +119,8 @@ export function Navbar({ locale }: { locale: string }) {
   return (
     <>
       <AppBar position="static" className={styles.navbar}>
-        <Container maxWidth="xl">
-          <Toolbar>
+        <Container maxWidth="lg">
+          <Toolbar className={styles.toolbar}>
             {isMobile && (
               <IconButton
                 color="inherit"
@@ -126,22 +133,24 @@ export function Navbar({ locale }: { locale: string }) {
               </IconButton>
             )}
 
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{ flexGrow: isMobile ? 1 : 0, mr: 4, cursor: "pointer" }}
-              onClick={() => handleNavigation("/")}
-            >
-              DriftBase
-            </Typography>
+            <Link href={`/${locale}`}>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{ flexGrow: isMobile ? 1 : 0, mr: 4, cursor: "pointer" }}
+              >
+                DriftBase
+              </Typography>
+            </Link>
 
             {!isMobile && (
               <Box sx={{ flexGrow: 1, display: "flex", gap: 2 }}>
                 {navItems.map((item) => (
                   <Button
                     key={item.path}
+                    component={Link}
+                    href={item.path}
                     color="inherit"
-                    onClick={() => handleNavigation(item.path)}
                   >
                     {item.label}
                   </Button>
@@ -149,7 +158,14 @@ export function Navbar({ locale }: { locale: string }) {
               </Box>
             )}
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                marginLeft: "auto",
+                gap: 1,
+              }}
+            >
               <IconButton
                 size="large"
                 aria-label="change language"
@@ -161,7 +177,7 @@ export function Navbar({ locale }: { locale: string }) {
                 <Language />
               </IconButton>
 
-              {dbUser ? (
+              {session ? (
                 <>
                   <IconButton
                     size="large"
@@ -188,20 +204,19 @@ export function Navbar({ locale }: { locale: string }) {
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
                   >
-                    <MenuItem
-                      onClick={() => {
-                        handleClose();
-                        handleNavigation(`/${locale}/profile`);
-                      }}
+                    <Link href={`/${locale}/profile`} onClick={handleClose}>
+                      <MenuItem>{t("nav.profile")}</MenuItem>
+                    </Link>
+                    <Link href={`/${locale}/my-events`} onClick={handleClose}>
+                      <MenuItem>{t("nav.organizer")}</MenuItem>
+                    </Link>
+                    <Link
+                      href={`/${locale}/my-registrations`}
+                      onClick={handleClose}
                     >
-                      {t("nav.profile")}
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        signOut();
-                        handleClose();
-                      }}
-                    >
+                      <MenuItem>{t("nav.registrations")}</MenuItem>
+                    </Link>
+                    <MenuItem component={"button"} onClick={handleSignOut}>
                       {t("nav.signout")}
                     </MenuItem>
                   </Menu>
@@ -210,14 +225,16 @@ export function Navbar({ locale }: { locale: string }) {
                 !isMobile && (
                   <>
                     <Button
+                      component={Link}
+                      href={`/${locale}/auth/signin`}
                       color="inherit"
-                      onClick={() => handleNavigation(`/${locale}/auth/signin`)}
                     >
                       {t("nav.signin")}
                     </Button>
                     <Button
+                      component={Link}
+                      href={`/${locale}/auth/signup`}
                       color="inherit"
-                      onClick={() => handleNavigation(`/${locale}/auth/signup`)}
                     >
                       {t("nav.signup")}
                     </Button>
@@ -232,9 +249,24 @@ export function Navbar({ locale }: { locale: string }) {
               open={Boolean(langAnchorEl)}
               onClose={handleLangClose}
             >
-              <MenuItem onClick={() => changeLanguage("pl")}>Polski</MenuItem>
-              <MenuItem onClick={() => changeLanguage("en")}>English</MenuItem>
-              <MenuItem onClick={() => changeLanguage("ru")}>Русский</MenuItem>
+              <Link
+                href={getChangeLanguageLink("pl")}
+                onClick={handleLangClose}
+              >
+                <MenuItem>Polski</MenuItem>
+              </Link>
+              <Link
+                href={getChangeLanguageLink("en")}
+                onClick={handleLangClose}
+              >
+                <MenuItem>English</MenuItem>
+              </Link>
+              <Link
+                href={getChangeLanguageLink("ru")}
+                onClick={handleLangClose}
+              >
+                <MenuItem>Русский</MenuItem>
+              </Link>
             </Menu>
           </Toolbar>
         </Container>

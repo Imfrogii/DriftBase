@@ -1,99 +1,152 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import type { FullRegistration, Registration } from "@/lib/supabase/types";
-import { TFilters } from "../types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import api from "../utils/request";
+import { enqueueSnackbar, useSnackbar } from "notistack";
+import { useLocale, useTranslations } from "next-intl";
+import { UseFormReset } from "react-hook-form";
+import { Registration } from "../supabase/types";
+import { getErrorTranslation } from "../helpers/getErrorTranslation";
 
-export function useRegistrations(filters: TFilters, userId?: string) {
-  return useQuery({
-    queryKey: ["registrations", filters, userId],
-    queryFn: async () => {
-      // const { data, error } = await supabase
-      //   .from("registrations")
-      //   .select(
-      //     `
-      //     *,
-      //     event:events(*),
-      //     car:cars(*)
-      //   `
-      //   )
-      //   .eq("user_id", userId!)
-      // .order("created_at", { ascending: false });
-
-      const today = new Date(); // YYYY-MM-DD
-
-      const { data, error } = await supabase
-        .from("registrations")
-        .select(
-          `
-            *,
-            event:events(
-              id, 
-              title,
-              slug,
-              level,
-              price,
-              event_date,
-              location:locations(id, name, latitude, longitude)
-            ),
-            car:cars(id, make, model, year)
-          `
-        )
-        .eq("user_id", userId)
-        .is("deleted_at", null)
-        .gte("event.event_date", today ?? 0)
-        .eq("event.deleted_at", null)
-        .eq("event.level", filters.level)
-        .lte("event.price", filters.priceMax)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as FullRegistration[];
-    },
-    enabled: !!userId,
-  });
-}
-
-export function useCreateRegistration() {
+export function useCreateCashRegistration() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
-    mutationFn: async (
-      registrationData: Omit<Registration, "id" | "created_at" | "deleted_at">
-    ) => {
-      const { data, error } = await supabase
-        .from("registrations")
-        .insert(registrationData)
-        .select()
-        .single();
+    mutationFn: async (registrationData: {
+      event_id: string;
+      car_id: string;
+    }) => {
+      const { data } = await api.post(
+        `/api/registrations/cash`,
+        registrationData
+      );
 
-      if (error) throw error;
       return data;
     },
-    onSuccess: (data: Registration, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["registrations", variables.user_id],
-      });
+    onSuccess: () => {
+      enqueueSnackbar("Registered successfully", { variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["registrations"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event", data.event_id] });
+      router.refresh();
     },
   });
 }
 
-export function useDeleteRegistration() {
+export function useCreateOnlineRegistration() {
   const queryClient = useQueryClient();
+  const locale = useLocale();
+  const router = useRouter();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("registrations")
-        .delete()
-        .eq("id", id);
+    mutationFn: async (registrationData: {
+      event_id: string;
+      car_id: string;
+    }) => {
+      const { data } = await api.post(`/api/registrations/online`, {
+        ...registrationData,
+        locale,
+      });
 
-      if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["registrations"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      router.push(response.url);
+    },
+    onError: () => {
+      enqueueSnackbar("Failed to register", {
+        variant: "error",
+      });
+    },
+  });
+}
+
+export function useUnregister(handleClose: () => void) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async (registration_id: string) => {
+      const { data } = await api.put(
+        `/api/registrations/${registration_id}/unregister`
+      );
+
+      return data;
+    },
+    onSuccess: () => {
+      enqueueSnackbar("Unregistered successfully", { variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      handleClose();
+      router.refresh();
+    },
+  });
+}
+
+export type RegistrationCode = {
+  registration_code: number;
+  expires_at: string;
+  event_id: string;
+};
+
+export function useGenerateCheckInCode(
+  setRegistrationCode: (registrationCode: RegistrationCode) => void
+) {
+  return useMutation({
+    mutationFn: async (registration_id: string) => {
+      const { data } = await api.post<RegistrationCode>(
+        `/api/registration-code`,
+        {
+          registration_id,
+        }
+      );
+
+      return data;
+    },
+    onSuccess: (response) => {
+      setRegistrationCode(response);
+    },
+    onError: () => {
+      enqueueSnackbar("Failed to create check-in code", {
+        variant: "error",
+      });
+    },
+  });
+}
+
+export function useRegistrationCodeCheck(
+  reset: UseFormReset<{
+    code: string;
+  }>,
+  setIsScanLoading: (isLoading: boolean) => void
+) {
+  const t = useTranslations();
+  return useMutation<Registration, { message: string }, string>({
+    mutationFn: async (code: string) => {
+      const { data } = await api.put("/api/registration-code/verify", {
+        code,
+      });
+
+      return data;
+    },
+    onSuccess: () => {
+      reset();
+      enqueueSnackbar(t("scanner.success"), {
+        variant: "success",
+        autoHideDuration: 5000,
+        preventDuplicate: false,
+      });
+    },
+    onError: (error) => {
+      enqueueSnackbar(getErrorTranslation(t, error.message, "scanner"), {
+        variant: "error",
+        autoHideDuration: 5000,
+        preventDuplicate: false,
+      });
+    },
+    onSettled: () => {
+      setIsScanLoading(false);
     },
   });
 }

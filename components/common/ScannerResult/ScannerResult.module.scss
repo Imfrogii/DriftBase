@@ -1,0 +1,40 @@
+.container {
+  display: flex !important;
+  width: 100%;
+  height: calc(100vh - 64px);
+  align-items: center;
+  justify-content: center;
+}
+
+.center {
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  padding: 2rem;
+}
+
+.successIcon {
+  font-size: 100px;
+  color: #4caf50;
+  margin-bottom: 0.5rem;
+}
+
+.errorIcon {
+  font-size: 100px;
+  color: #f44336;
+  margin-bottom: 0.5rem;
+}
+
+.redirectButton {
+  min-width: 240px;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    position: relative;
+    flex-direction: column;
+    height: calc(100vh - 56px);
+  }
+}

@@ -1,343 +1,152 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  MenuItem,
-  Box,
-  Alert,
-} from "@mui/material";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { useEvent } from "@/lib/queries/events";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { Container, Paper, Button, Box, Typography } from "@mui/material";
+import { useUpdateEvent } from "@/lib/queries/events";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import type { Event } from "@/lib/supabase/types";
 import styles from "./EditEventPage.module.scss";
-import { LocationPicker } from "@/components/common/LocationPicker_prev/LocationPicker";
+import {
+  EventLevel,
+  EventStatus,
+  EventType,
+  EventWithRegistrations,
+  Location,
+} from "@/lib/supabase/types";
+import { jsonToFormData } from "@/lib/helpers/jsonToFormData";
+import "react-datepicker/dist/react-datepicker.css";
+import { useCreateEventSchema } from "@/components/forms/EventForm/useCreateEventSchema";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { EventForm } from "@/components/forms/EventForm/EventForm";
 
-interface EditEventFormData {
+export interface EditEventFormData {
   title: string;
   description: string;
-  location_name: string;
-  location_lat: number;
-  location_lng: number;
-  event_date: string;
-  level: "beginner" | "street" | "pro";
+  location_id: string;
+  start_date: string;
+  end_date: string;
+  level: EventLevel;
+  type: EventType;
   price: number;
+  max_drivers: number;
+  image: File | null;
+  image_url?: string | null;
+  isDeleteImg?: boolean;
 }
 
-interface EditEventPageProps {
-  eventSlug: string;
-}
+type EditEventPageProps = {
+  userId: string;
+  event: EventWithRegistrations;
+};
 
-export function EditEventPage({ eventSlug }: EditEventPageProps) {
+export function EditEventPage({ event, userId }: EditEventPageProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const { data: event, isLoading: eventLoading } = useEvent(eventSlug);
-  const queryClient = useQueryClient();
-
-  const [message, setMessage] = useState<{
+  const updateEventMutation = useUpdateEvent();
+  const [submitMessage, setSubmitMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [isFileLoading, setIsFileLoading] = useState(false);
+  const schema = useCreateEventSchema();
 
-  const updateEventMutation = useMutation({
-    mutationFn: async (eventData: Partial<Event>) => {
-      const { data, error } = await supabase
-        .from("events")
-        .update(eventData)
-        .eq("slug", eventSlug)
-        .select()
-        .single();
+  const {
+    creator,
+    registrations,
+    created_at,
+    updated_at,
+    created_by,
+    free_places,
+    location,
+    registered_drivers,
+    ...rest
+  } = event;
 
-      if (error) throw error;
-      return data;
+  const methods = useForm<EditEventFormData>({
+    defaultValues: {
+      ...rest,
+      image: null,
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventSlug] });
-      queryClient.invalidateQueries({ queryKey: ["my-events"] });
-      setMessage({ type: "success", text: "Event updated successfully!" });
-    },
+    resolver: yupResolver(schema),
   });
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    formState: { isSubmitting },
     reset,
-    setValue,
-  } = useForm<EditEventFormData>();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth/signin");
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    if (event && !loading) {
-      // Check if user is the owner
-      if (event.created_by !== user?.id) {
-        router.push("/");
-        return;
-      }
-
-      // Format date for datetime-local input
-      const eventDate = new Date(event.event_date);
-      const formattedDate = eventDate.toISOString().slice(0, 16);
-
-      reset({
-        title: event.title,
-        description: event.description || "",
-        location_name: event.location_name || "",
-        location_lat: event.location_lat,
-        location_lng: event.location_lng,
-        event_date: formattedDate,
-        level: event.level,
-        price: event.price,
-      });
-    }
-  }, [event, user, reset, router]);
+  } = methods;
 
   const onSubmit = async (data: EditEventFormData) => {
+    setSubmitMessage(null);
+
+    if (!userId) return;
+
+    // TODO only specific fields should be editable
     try {
-      await updateEventMutation.mutateAsync({
+      const formData = jsonToFormData({
         ...data,
-        // Convert date to ISO string
-        event_date: new Date(data.event_date).toISOString(),
+        created_by: userId,
+        status: EventStatus.ACTIVE,
       });
+      const res = await updateEventMutation.mutateAsync(formData);
+      reset();
+      router.push(`/${locale}/event/${res.event.slug}`);
     } catch (error) {
-      setMessage({
+      console.log(error);
+      setSubmitMessage({
         type: "error",
         text: "Failed to update event. Please try again.",
       });
     }
   };
 
-  //   const handleLocationClick = () => {
-  //     if (navigator.geolocation) {
-  //       navigator.geolocation.getCurrentPosition(
-  //         (position) => {
-  //           reset((prev) => ({
-  //             ...prev,
-  //             location_lat: position.coords.latitude,
-  //             location_lng: position.coords.longitude,
-  //           }));
-  //         },
-  //         () => {
-  //           // Default to Warsaw center
-  //           reset((prev) => ({
-  //             ...prev,
-  //             location_lat: 52.2297,
-  //             location_lng: 21.0122,
-  //           }));
-  //         }
-  //       );
-  //     }
-  //   };
-
-  if (loading || eventLoading) {
-    return <div>{t("common.loading")}</div>;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (!event) {
-    return (
-      <Container maxWidth="md">
-        <Alert severity="error">Event not found.</Alert>
-      </Container>
-    );
-  }
-
-  if (event.created_by !== user.id) {
-    return (
-      <Container maxWidth="md">
-        <Alert severity="error">
-          You are not authorized to edit this event.
-        </Alert>
-      </Container>
-    );
-  }
-
   return (
-    <Container maxWidth="md" className={styles.container}>
-      <Typography variant="h4" gutterBottom>
-        Edit Event
-      </Typography>
-
-      {message && (
-        <Alert severity={message.type} sx={{ mb: 3 }}>
-          {message.text}
-        </Alert>
-      )}
-
-      <Paper className={styles.formPaper}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          className={styles.form}
-        >
-          <TextField
-            fullWidth
-            label="Event Title"
-            {...register("title", { required: "Title is required" })}
-            error={!!errors.title}
-            helperText={errors.title?.message}
-            margin="normal"
-          />
-
-          <TextField
-            fullWidth
-            label="Description"
-            multiline
-            rows={4}
-            {...register("description")}
-            margin="normal"
-          />
-
-          {/* <TextField
-            fullWidth
-            label="Location Name"
-            placeholder="e.g., Warsaw Drift Track"
-            {...register("location_name")}
-            margin="normal"
-          />
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Latitude"
-                type="number"
-                {...register("location_lat", {
-                  required: "Latitude is required",
-                  valueAsNumber: true,
-                })}
-                error={!!errors.location_lat}
-                helperText={errors.location_lat?.message}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Longitude"
-                type="number"
-                {...register("location_lng", {
-                  required: "Longitude is required",
-                  valueAsNumber: true,
-                })}
-                error={!!errors.location_lng}
-                helperText={errors.location_lng?.message}
-                margin="normal"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={handleLocationClick}
-                sx={{ mt: 2, height: 56 }}
-                fullWidth
-              >
-                Use My Location
-              </Button>
-            </Grid>
-          </Grid> */}
-
-          <Box sx={{ my: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Event Location
-            </Typography>
-            <LocationPicker
-              initialLocation={
-                event
-                  ? {
-                      name: event.location_name || "",
-                      latitude: event.location_lat,
-                      longitude: event.location_lng,
-                    }
-                  : undefined
-              }
-              onLocationSelect={(location) => {
-                setValue("location_name", location.name);
-                setValue("location_lat", location.latitude);
-                setValue("location_lng", location.longitude);
-              }}
-              height={400}
-            />
-          </Box>
-          <TextField
-            fullWidth
-            label="Event Date"
-            type="datetime-local"
-            {...register("event_date", { required: "Date is required" })}
-            error={!!errors.event_date}
-            helperText={errors.event_date?.message}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            margin="normal"
-          />
-
-          <TextField
-            fullWidth
-            select
-            label="Event Level"
-            {...register("level", { required: "Level is required" })}
-            error={!!errors.level}
-            helperText={errors.level?.message}
-            margin="normal"
-          >
-            <MenuItem value="beginner">Beginner</MenuItem>
-            <MenuItem value="street">Street</MenuItem>
-            <MenuItem value="pro">Professional</MenuItem>
-          </TextField>
-
-          <TextField
-            fullWidth
-            label="Price (PLN)"
-            type="number"
-            {...register("price", {
-              required: "Price is required",
-              valueAsNumber: true,
-              min: { value: 0, message: "Price must be positive" },
-            })}
-            error={!!errors.price}
-            helperText={errors.price?.message}
-            margin="normal"
-          />
-
-          <Box className={styles.actions}>
-            <Button
-              type="button"
-              variant="outlined"
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={updateEventMutation.isPending}
-            >
-              {updateEventMutation.isPending ? "Updating..." : "Update Event"}
-            </Button>
-          </Box>
+    <div className={styles.createEventPage}>
+      <Container maxWidth="md" className={styles.container}>
+        <Box className={styles.header}>
+          <Typography variant="h2" gutterBottom>
+            {t("create_event.title")}
+          </Typography>
+          <Typography variant="h5" gutterBottom>
+            Fill in the details below to publish your drift event
+          </Typography>
         </Box>
-      </Paper>
-    </Container>
+
+        <Paper className={styles.paper} elevation={1}>
+          <FormProvider {...methods}>
+            <EventForm
+              isEditPage={true}
+              onSubmit={onSubmit}
+              setIsFileLoading={setIsFileLoading}
+              initialLocation={location}
+              registeredDrivers={registered_drivers}
+            >
+              <Box className={styles.actions}>
+                <Button
+                  variant="text"
+                  color="inherit"
+                  className={styles.submitButton}
+                  onClick={() => router.push(`/${locale}/event/${event.slug}`)}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting || isFileLoading}
+                  className={styles.submitButton}
+                >
+                  {isSubmitting
+                    ? t("common.loading")
+                    : t("edit_event.form.submit")}
+                </Button>
+              </Box>
+            </EventForm>
+          </FormProvider>
+        </Paper>
+      </Container>
+    </div>
   );
 }

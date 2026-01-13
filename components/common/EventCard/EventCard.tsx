@@ -1,4 +1,3 @@
-"use client";
 import {
   Card,
   CardContent,
@@ -7,48 +6,28 @@ import {
   Chip,
   Box,
 } from "@mui/material";
-import {
-  CalendarToday,
-  LocationOn,
-  EuroSymbol,
-  Person,
-} from "@mui/icons-material";
-import type { EventWithCreator, Location } from "@/lib/supabase/types";
+import { LocationOn, Person } from "@mui/icons-material";
+import MoneyIcon from "@mui/icons-material/Paid";
+import GroupIcon from "@mui/icons-material/Group";
+import type { EventWithCreator } from "@/lib/supabase/types";
 import { Button } from "../Button/Button";
-import { useTranslations } from "next-intl";
 import styles from "./EventCard.module.scss";
-import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
-import { useAuth } from "@/lib/hooks/useAuth";
-// import { useAuth } from "@/lib/hooks/useAuth";
+import Image from "next/image";
+import { formatDate, isSameDay } from "date-fns";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import Link from "next/link";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getImageUrl } from "@/lib/helpers/getImageUrl";
 
 interface EventCardProps {
   event: EventWithCreator;
-  onRegister?: (eventId: string) => void;
-  showRegisterButton?: boolean;
   loading?: boolean;
 }
 
-export function EventCard({
-  event,
-  onRegister,
-  showRegisterButton = true,
-  loading,
-}: EventCardProps) {
-  const t = useTranslations("events");
-  const router = useRouter();
-  const locale = useLocale();
-  const { dbUser } = useAuth();
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+export async function EventCard({ event }: EventCardProps) {
+  const locale = await getLocale();
+  const t = await getTranslations();
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -64,91 +43,100 @@ export function EventCard({
   };
 
   return (
-    <Card className={styles.card}>
-      <CardContent>
-        <Box className={styles.header}>
-          <Typography variant="h6" component="h3" className={styles.title}>
-            {event.title}
-          </Typography>
-          <Chip
-            label={t(`levels.${event.level}`)}
-            color={getLevelColor(event.level)}
-            size="small"
-          />
-        </Box>
+    <Link href={`/${locale}/event/${event.slug}`}>
+      <Card className={styles.card}>
+        <Image
+          // src={`/placeholder.svg?height=120&width=200&text=${encodeURIComponent(
+          //   event.title
+          // )}`}
+          src={getImageUrl(event.image_url, event.status)}
+          alt={event.title}
+          className={styles.eventImage}
+          fill
+        />
+        <Chip
+          label={t(`levels.${event.level}`)}
+          color={getLevelColor(event.level)}
+          size="small"
+          className={styles.levelChip}
+        />
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          className={styles.description}
-        >
-          {event.description}
-        </Typography>
-
-        <Box className={styles.details}>
-          <Box className={styles.detail}>
-            <CalendarToday fontSize="small" />
-            <Typography variant="body2">
-              {formatDate(event.event_date)}
+        <CardContent>
+          <Box className={styles.header}>
+            <Typography variant="h6" component="h3" className={styles.title}>
+              {event.title}
             </Typography>
           </Box>
 
-          <Box className={styles.detail}>
-            <LocationOn fontSize="small" />
-            <Typography variant="body2">
-              <Typography variant="body2">{event.location.name}</Typography>
-            </Typography>
-          </Box>
-
-          <Box className={styles.detail}>
-            <EuroSymbol fontSize="small" />
-            <Typography variant="body2">{event.price} PLN</Typography>
-          </Box>
-
-          <Box className={styles.detail}>
-            <Person fontSize="small" />
-            <Typography variant="body2">
-              {event.creator?.display_name || event.creator?.email}
-            </Typography>
-          </Box>
-
-          <Box className={styles.detail}>
-            <Person fontSize="small" />
-            <Typography variant="body2">
-              {event.registered_drivers}/{event.max_drivers}
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-
-      {showRegisterButton && (
-        <CardActions>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() =>
-              router.push(`/${locale}/events/${event.slug}/register`)
-            }
-            loading={loading}
-            fullWidth
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            className={styles.description}
           >
-            {t("register")}
-          </Button>
-        </CardActions>
-      )}
+            {event.description_short}
+          </Typography>
 
-      {dbUser?.id === event.created_by && (
-        <CardActions>
+          <Box className={styles.details}>
+            <Box className={styles.detail}>
+              <CalendarMonthIcon fontSize="small" />
+              {isSameDay(event.start_date, event.end_date) ? (
+                <Typography variant="body2" fontWeight="bold">
+                  {formatDate(event.start_date, "dd MMMM yyyy")}
+                </Typography>
+              ) : (
+                <Typography variant="body2" fontWeight="bold">
+                  {formatDate(event.start_date, "dd")}-
+                  {formatDate(event.end_date, "dd MMMM yyyy")}
+                </Typography>
+              )}
+            </Box>
+
+            <Box className={styles.detail}>
+              <AccessTimeIcon fontSize="small" />
+              <Typography variant="body2" fontWeight="bold">
+                {formatDate(event.start_date, "HH:mm")}-
+                {formatDate(event.end_date, "HH:mm")}
+              </Typography>
+            </Box>
+
+            <Box className={styles.detail}>
+              <LocationOn fontSize="small" />
+              <Typography variant="body2">{event.location?.name}</Typography>
+            </Box>
+
+            <Box className={styles.detail}>
+              <MoneyIcon fontSize="small" />
+              <Typography variant="body2">{event.price} PLN</Typography>
+            </Box>
+
+            <Box className={styles.detail}>
+              <Person fontSize="small" />
+              <Typography variant="body2">
+                {event.creator.display_name}
+              </Typography>
+            </Box>
+
+            <Box className={styles.detail}>
+              <GroupIcon fontSize="small" />
+              <Typography variant="body2">
+                {event.registered_drivers}/{event.max_drivers} registered
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+
+        <CardActions className={styles.cardActions}>
           <Button
             variant="outlined"
+            component="span"
             color="primary"
-            onClick={() => router.push(`/${locale}/events/${event.slug}/edit`)}
             fullWidth
+            className={styles.button}
           >
-            {t("edit")}
+            {t("View Details")}
           </Button>
         </CardActions>
-      )}
-    </Card>
+      </Card>
+    </Link>
   );
 }
